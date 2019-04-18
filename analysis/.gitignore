@@ -1,0 +1,12 @@
+.httr-oauth
+.google_API_keys
+*.Rproj
+*.Rproj.user
+*.Rhistory
+*.Rprofile
+*.html
+auth
+.~lock*
+manifest.R
+output/ignore/*
+input/ignore/*

@@ -1,0 +1,221 @@
+---
+title: "rddj-template"
+subtitle: "My analysis"
+author: "My Name"
+date: "October 2018"
+output:
+  html_document:
+    code_folding: show
+    df_print: kable
+    toc: yes
+    toc_depth: 4
+    toc_float: 
+      collapsed: false
+      smooth_scroll: false
+---
+
+
+```{r, echo=FALSE}
+# CONFIG
+user_name <- "grssnbchr" # your Git username (only needed if
+# you want to deploy to GH pages)
+project_name <- "rddj-template" # adapt!
+package_date <- "2018-09-01" # date of the CRAN snapshot that
+# the checkpoint package uses
+R_version <- "3.5.2" # R-Version to use
+options(Ncpus = 4) # use 4 cores for parallelized installation of packages
+if (R_version != paste0(version$major, ".", version$minor)){
+  stop("ERROR: specified R version does not match currently used.")
+}
+```
+
+## Notes
+
+This report was generated on `r Sys.time()`. R version: `r paste0(version$major, ".", version$minor)` on `r version$platform`. For this report, CRAN packages as of `r package_date` were used.
+
+...
+
+### R-Script & data
+
+The preprocessing and analysis of the data was conducted in the [R project for statistical computing](https://www.r-project.org/). The RMarkdown script used to generate this document and all the resulting data can be downloaded [under this link](http://`r user_name`.github.io/`r project_name`/rscript.zip). Through executing `main.Rmd`, the herein described process can be reproduced and this document can be generated. In the course of this, data from the folder `ìnput` will be processed and results will be written to `output`. 
+
+### GitHub
+
+The code for the herein described process can also be freely downloaded from [https://github.com/`r user_name`/`r project_name`](https://github.com/`r user_name`/`r project_name`). 
+
+
+### License
+
+...
+
+### Data description of output files
+
+#### `abc.csv` (Example)
+
+| Attribute | Type | Description |
+|-------|------|-----------------------------------------------------------------------------|
+| a | Numeric | ... |
+| b | Numeric | ... |
+| c | Numeric |  ... |
+
+### `xyz.csv` 
+
+...
+
+## Preparations
+
+```{r, echo=FALSE}
+detach_all_packages <- function() {
+  basic_packages_blank <-  c("stats",
+                             "graphics",
+                             "grDevices",
+                             "utils",
+                             "datasets",
+                             "methods",
+                             "base")
+  basic_packages <- paste("package:", basic_packages_blank, sep = "")
+
+  package_list <- search()[
+    ifelse(unlist(gregexpr("package:", search())) == 1, TRUE, FALSE)]
+
+  package_list <- setdiff(package_list, basic_packages)
+
+  if (length(package_list) > 0)  for (package in package_list) {
+    detach(package, character.only = TRUE, unload = TRUE)
+    print(paste("package ", package, " detached", sep = ""))
+  }
+}
+
+detach_all_packages()
+
+# this allows multiple persons to use the same RMarkdown
+# without adjusting the working directory by themselves all the time
+source("scripts/csf.R")
+path_to_wd <- csf() # if this - for some reason - does not work,
+# replace with a hardcoded path, like so: "~/projects/rddj-template/analysis/"
+if ( is.null(path_to_wd) | !dir.exists(path_to_wd)) {
+  print("WARNING: No working directory specified for current user")
+} else {
+  setwd(path_to_wd)
+}
+
+# suppress scientific notation
+options(scipen = 999)
+
+# unload global rstudioapi and knitr again to avoid conflicts with checkpoint
+# this is only necessary if executed within RStudio
+# outside of RStudio, namely in the knit.sh script, this causes RMarkdown
+# rendering to fail, thus should not be executed there
+if (Sys.getenv("RSTUDIO") == "1"){
+  detach_all_packages()
+}
+```
+
+
+### Define packages
+
+```{r, echo=TRUE, message=FALSE, warning=FALSE}
+# from https://mran.revolutionanalytics.com/web/packages/checkpoint/vignettes/using-checkpoint-with-knitr.html
+# if you don't need a package, remove it from here (commenting is probably not sufficient)
+# tidyverse: see https://blog.rstudio.org/2016/09/15/tidyverse-1-0-0/
+cat("
+library(rstudioapi)
+library(tidyverse) # ggplot2, dplyr, tidyr, readr, purrr, tibble
+library(magrittr) # pipes
+library(readxl) # excel
+library(scales) # scales for ggplot2
+library(jsonlite) # json
+library(lintr) # code linting
+library(sf) # spatial data handling
+library(rmarkdown)",
+file = "manifest.R")
+```
+
+### Install packages
+
+```{r, echo=TRUE, message=FALSE, warning=FALSE}
+# if checkpoint is not yet installed, install it (for people using this
+# system for the first time)
+if (!require(checkpoint)) {
+  if (!require(devtools)) {
+    install.packages("devtools", repos = "http://cran.us.r-project.org")
+    require(devtools)
+  }
+  devtools::install_github("RevolutionAnalytics/checkpoint",
+                           ref = "v0.3.2", # could be adapted later,
+                           # as of now (beginning of July 2017
+                           # this is the current release on CRAN)
+                           repos = "http://cran.us.r-project.org")
+  require(checkpoint)
+}
+# nolint start
+if (!dir.exists("~/.checkpoint")) {
+  dir.create("~/.checkpoint")
+}
+# nolint end
+# install packages for the specified CRAN snapshot date
+checkpoint(snapshotDate = package_date,
+           project = path_to_wd,
+           verbose = T,
+           scanForPackages = T,
+           use.knitr = F,
+           R.version = R_version)
+rm(package_date)
+```
+
+
+### Load packages
+
+```{r, echo=TRUE, message=FALSE, warning=FALSE}
+source("manifest.R")
+unlink("manifest.R")
+sessionInfo()
+```
+
+### Load additional scripts
+
+```{r, echo=TRUE, message=FALSE, warning=FALSE}
+# if you want to outsource logic to other script files, see README for 
+# further information
+knitr::read_chunk("scripts/my_script.R")
+source("scripts/my_script.R")
+my_function(5)
+```
+
+## IO test
+
+```{r, echo=TRUE, message=FALSE, warning=FALSE}
+x <- read.csv2("input/test.csv", sep = ",")
+x
+write.csv2(x, "output/abc.csv", row.names = F)
+write.csv2(x, "output/xyz.csv", row.names = F)
+# the following file would be ignored by Git if saved into the ignore folder
+# see README for further information
+# write.csv2(x, "output/ignore/fgh.csv", row.names = F)
+```
+
+## Some plot
+
+```{r, echo=TRUE, message=FALSE, warning=FALSE}
+set.seed(123)
+x <- rnorm(1000)
+y <- x * 2 + rnorm(1000)
+df <- data.frame(x, y)
+ggplot(df) +
+  geom_point(aes(x = x, y = y)) +
+  geom_smooth(aes(x = x, y = y)) +
+  labs(title = "The correlation between x and y", 
+       subtitle = "A ggplot2 approach", 
+       caption = "source: a pseudo-number generator with seed 123") +
+  theme_minimal()
+``` 
+
+## Linting
+
+The code in this RMarkdown is listed with the [lintr package](https://github.com/jimhester/lintr), which is based on the  [tidyverse style guide](http://style.tidyverse.org/). 
+
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+lintr::lint("main.Rmd")
+# if you have additional scripts and want them to be linted too, add them here
+# lintr::lint("scripts/my_script.R")
+```
