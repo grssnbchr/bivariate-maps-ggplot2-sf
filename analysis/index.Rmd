@@ -25,7 +25,7 @@ user_name <- "grssnbchr" # your Git username (only needed if
 project_name <- "bivariate-maps-ggplot2-sf" # adapt!
 package_date <- "2019-03-01" # date of the CRAN snapshot that
 # the checkpoint package uses
-R_version <- "3.5.3" # R-Version to use
+R_version <- "3.5.2" # R-Version to use
 options(Ncpus = 4) # use 4 cores for parallelized installation of packages
 if (R_version != paste0(version$major, ".", version$minor)){
   stop("ERROR: specified R version does not match currently used.")
@@ -204,17 +204,18 @@ lake_geo <- read_sf("input/g2s15.shp")
 productive_area <- read_sf("input/productive_areas.shp")
 
 # read in raster of relief (hillshading)
-relief <- raster("input/02-relief-georef.tif") %>%
-  # hide hillshading outside of switzerland by masking with country borders
+relief <- raster("input/02-relief-ascii.asc") %>%
+  # hide hillshading outside of Switzerland by masking with country borders
   mask(country_geo) %>%
   as("SpatialPixelsDataFrame") %>%
   as.data.frame() %>%
-  rename(value = `X02.relief.georef`)
+  rename(value = layer)
 
 # clean up
 rm(country_geo)
 
 ```
+
 
 ## Join Geodata with data
 
