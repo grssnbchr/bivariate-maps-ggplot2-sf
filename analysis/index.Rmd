@@ -6,17 +6,32 @@ output:
   md_document:
     variant: markdown_phpextra+backtick_code_blocks
     toc: yes
-    toc_depth: 3
-# output:
-#   html_document:
-#     code_folding: show
-#     df_print: kable
-#     toc: yes
-#     toc_depth: 4
-#     toc_float:
-#       collapsed: false
-#       smooth_scroll: false
+    toc_depth: 2
+    df_print: kable
 ---
+
+
+# Bivariate maps with ggplot2 and sf
+
+<!-- <img src="https://timogrossenbacher.ch/wp-content/uploads/2018/03/csi-visualize-interpolation-1.png" width="100%" /> -->
+
+The above map shows income (in-)equality in Switzerland on the municipality level by visualizing two variables at the same time: [the Gini coefficient](https://en.wikipedia.org/wiki/Gini_coefficient), and average income (in Swiss Francs). It uses a so-called bivariate color scale, blending two different color scales into one. Lastly, it uses the beautiful relief depicting the mountainous Swiss landscape. Here we're going to show you how to produce such a map *exclusively with R*.
+
+For this blog post, I worked together with my colleague [Angelo Zehr](https://twitter.com/angelozehr), who recently published a [nice bivariate thematic map](https://www.srf.ch/news/schweiz/interaktive-karte-so-ungleich-ist-das-einkommen-in-der-schweiz-verteilt) comparing income equality and average income in Switzerland. We took this opportunity to give a major update of my post on [thematic maps with ggplot2](https://timogrossenbacher.ch/2016/12/beautiful-thematic-maps-with-ggplot2-only/) which is more than two years old, but still attracts hundreds of visits each week. What has changed since then?
+
+* With the `sf` packacke and its integration into `ggplot2` through the `geom_sf()` function, it is now even easier to quickly create thematic maps.
+* In this post, we not only show how to produce a univariate map (with one variable displayed) but also a bivariate map, where two variables are displayed at the same time – using one visual variable (or aesthetic in `ggplot2` terms) only, namely the "fill" variable. As said above, this works by blending two color scales together.
+
+## Outline
+
+This tutorial is structured as follows:
+
+* Read in the thematic data and geodata (no preprocessing required) and join them.
+* Define a general map theme.
+* Create a univariate thematic map ("choropleth") showing the average income. This largely draws from [the previous blog post](https://timogrossenbacher.ch/2016/12/beautiful-thematic-maps-with-ggplot2-only) and involves techniques for custom color classes and advanced aesthetics.
+* Create a bivariate thematic map (also a "choropleth") showing average income and income (in-)equality at the same time.
+
+Let's go! 
 
 ```{r, echo=FALSE}
 # CONFIG
@@ -32,42 +47,42 @@ if (R_version != paste0(version$major, ".", version$minor)){
 }
 ```
 
-## Notes
+## Reproducibility
 
-This report was generated on `r Sys.time()`. R version: `r paste0(version$major, ".", version$minor)` on `r version$platform`. For this report, CRAN packages as of `r package_date` were used.
+As always, you can reproduce, reuse and remix everything you find here, just go to [this repository](https://github.com/grssnbchr/`r project_name`) and clone it. All the needed input files are in the `input` folder, and the main file to execute is `index.Rmd`. Right now, knitting it produces an `index.md` that I use for my blog post on [timogrossenbacher.ch](https://timogrossenbacher.ch), but you can adapt the script to produce an HTML file, too. The PNGs produced herein are saved to `wp-content/uploads/2019/04` so I can display them directly in my blog, but of course you can also adjust this.
 
-...
-
-### R-Script & data
-
-The preprocessing and analysis of the data was conducted in the [R project for statistical computing](https://www.r-project.org/). The RMarkdown script used to generate this document and all the resulting data can be downloaded [under this link](http://`r user_name`.github.io/`r project_name`/rscript.zip). Through executing `main.Rmd`, the herein described process can be reproduced and this document can be generated. In the course of this, data from the folder `ìnput` will be processed and results will be written to `output`. 
 
 ### GitHub
 
 The code for the herein described process can also be freely downloaded from [https://github.com/`r user_name`/`r project_name`](https://github.com/`r user_name`/`r project_name`). 
 
-
 ### License
 
-...
+**CC-BY-SA**
 
-### Data description of output files
+### Version information
 
-#### `abc.csv` (Example)
-
-| Attribute | Type | Description |
-|-------|------|-----------------------------------------------------------------------------|
-| a | Numeric | ... |
-| b | Numeric | ... |
-| c | Numeric |  ... |
-
-### `xyz.csv` 
-
-...
+This report was generated on `r Sys.time()`. R version: `r paste0(version$major, ".", version$minor)` on `r version$platform`. For this report, CRAN packages as of `r package_date` were used.
 
 ## Preparations
 
-```{r, echo=FALSE}
+### Clear workspace and install necessary packages
+
+What follows from here until the section **Load Data** is just my usual routine: Detach all packages, remove all variables in the global environment, etc, and then load the packages from the MRAN server (a snapshot from March 1st, 2019). With this, I ensure [reproducibility and cross-device compatibility](https://timogrossenbacher.ch/2017/07/a-truly-reproducible-r-workflow/). I use my [freely available template](https://github.com/grssnbchr/rddj-template) for this, with some adaptions detailed under **Reproducibility**.
+
+```{r preparations, echo=FALSE}
+knitr::opts_chunk$set(
+    out.width = "100%",
+    dpi = 300,
+    fig.width = 8,
+    fig.height = 6,
+    fig.path = 'https://timogrossenbacher.ch/wp-content/uploads/2019/04/bm-',
+    strip.white = T,
+    dev = "png",
+    dev.args = list(png = list(bg = "#f5f5f2"))
+)
+
+
 detach_all_packages <- function() {
   basic_packages_blank <-  c("stats",
                              "graphics",
@@ -114,13 +129,13 @@ if (Sys.getenv("RSTUDIO") == "1"){
 }
 ```
 
-
 ### Define packages
+
+For this project, we just used the usual suspects, i.e. `tidyverse` packages including `ggplot2` for plotting, `sf` for geodata processing and `raster` for working with (spatial) raster data, i.e. the relief. Also, the `viridis` package imports the beautiful Viridis color scale we use for the univariate map.
 
 ```{r, echo=TRUE, message=FALSE, warning=FALSE}
 # from https://mran.revolutionanalytics.com/web/packages/checkpoint/vignettes/using-checkpoint-with-knitr.html
 # if you don't need a package, remove it from here (commenting is probably not sufficient)
-# tidyverse: see https://blog.rstudio.org/2016/09/15/tidyverse-1-0-0/
 cat("
 library(rstudioapi)
 library(tidyverse) # ggplot2, dplyr, tidyr, readr, purrr, tibble
@@ -128,6 +143,7 @@ library(magrittr) # pipes
 library(lintr) # code linting
 library(sf) # spatial data handling
 library(raster) # raster handling (needed for relief)
+library(viridis) # viridis color scale
 library(rmarkdown)",
 file = "manifest.R")
 ```
@@ -158,7 +174,7 @@ if (!dir.exists("~/.checkpoint")) {
 checkpoint(snapshotDate = package_date,
            project = path_to_wd,
            verbose = T,
-           scanForPackages = T,
+           scanForPackages = F,
            use.knitr = F,
            R.version = R_version)
 rm(package_date)
@@ -167,30 +183,43 @@ rm(package_date)
 
 ### Load packages
 
+Here the packages are actually loaded. From the `sessionInfo()` output you can see the exact version numbers of packages used herein.
+
 ```{r, echo=TRUE, message=FALSE, warning=FALSE}
 source("manifest.R")
 unlink("manifest.R")
 sessionInfo()
 ```
 
-## Read data
+## Data Sources
+
+### Thematic Data
+
+Here the thematic data to be visualized is loaded. It is contained in a CSV consisting of columns:
+
+* "municipality (name)", 
+* "bfs_id" (ID to match with geodata), 
+* "mean" (average income in the municipality)
+* "gini" (the Gini index for income (in-)equality)
+
+The data provider in this case is the Swiss Federal Tax Administration, where the original data (as an Excel) can be [downloaded from](https://www.estv.admin.ch/dam/estv/de/dokumente/allgemein/Dokumentation/Zahlen_fakten/Steuerstatistiken/direkte_bundessteuer/np_statistische_kennzahlen_ohne/NP_2015_mitnull.xlsx.download.xlsx/NP_2015_mitnull.xlsx). The columns used were "mean_reinka" and "gini_reinka" for "mean" and "gini" (in the "Gemeinden - Communes" tab), respectively. See the first tabs in the Excel for a short explanation. Find additional explanations on [the SFTA website (German)](https://www.estv.admin.ch/estv/de/home/allgemein/steuerstatistiken/fachinformationen/steuerstatistiken/direkte-bundessteuer.html), especially in [this PDF](https://www.estv.admin.ch/dam/estv/de/dokumente/allgemein/Dokumentation/Zahlen_fakten/Steuerstatistiken/direkte_bundessteuer/np_statistische_kennzahlen_ohne/Einleitung.pdf.download.pdf/1-Einleitung_NP_d.pdf).
+
+We used the year 2015 as it is the youngest in the available time series.
 
 ```{r read data, echo=TRUE, message=FALSE, warning=FALSE}
-
 data <- read_csv("input/data.csv")
-
 ``` 
 
-## Read Geodata
+### Geodata
 
-On Mac OS you might run into the error message "Cannot create RasterLayer object from this file; perhaps you need to
-install rgdal first" on line 207. In that case, install gdal and geos from <http://www.kyngchaos.com/software/frameworks/>.
+Various geodata from the Swiss Federal Statistical Office and the Swiss Federal Office of Topography (swisstopo) depicting Swiss borders as of 2015 are used herein.
 
-```{r read in shape files}
+* `input/gde-1-1-15.*`: These geometries do not show the political borders of Swiss municipalities, but the so-called "productive" area, i.e., larger lakes and other "unproductive" areas such as mountains are excluded. This has two advantages: 1) The relatively sparsely populated but very large municipalities in the Alps don't have too much visual weight and 2) it allows us to use the beautiful raster relief of the Alps as a background. The data are also from the FSO, but not freely available. I was allowed to republish the Shapefile for this educational purpose (also included in the `input` folder). Please stick to that policy.
+* `input/g2*`: National (`s`) as well as cantonal borders (`k`) and lakes (`l`). Available [here](https://www.bfs.admin.ch/bfs/de/home/dienstleistungen/geostat/geodaten-bundesstatistik/administrative-grenzen/generalisierte-gemeindegrenzen.html).
+* (Hillshaded) relief: This is a freely available GeoTIFF from [the Swiss Federal Office of Topography (swisstopo)](https://shop.swisstopo.admin.ch/en/products/maps/national/digital/srm1000). For the sake of simplicity, it was converted to the "ESRI ASCII" format using ` gdal_translate -of AAIGrid 02-relief-georef.tif 02-relief-ascii.asc` on the CLI. The `raster` can read that format natively, without the need of explicitly installing the `rgdal` package – which is not the case for GeoTIFF files.
 
-# read municipality borders from 2015 (2324 municipalities)
-municipality_geo <- read_sf("input/g2g15.shp")
 
+```{r read in geodata, echo=TRUE, message=FALSE, warning=FALSE}
 # read cantonal borders
 canton_geo <- read_sf("input/g2k15.shp")
 
@@ -200,12 +229,12 @@ country_geo <- read_sf("input/g2l15.shp")
 # read lakes
 lake_geo <- read_sf("input/g2s15.shp")
 
-# read productive area
-productive_area <- read_sf("input/productive_areas.shp")
+# read productive area (2324 municipalities)
+municipality_prod_geo <- read_sf("input/gde-1-1-15.shp")
 
-# read in raster of relief (hillshading)
+# read in raster of relief
 relief <- raster("input/02-relief-ascii.asc") %>%
-  # hide hillshading outside of Switzerland by masking with country borders
+  # hide relief outside of Switzerland by masking with country borders
   mask(country_geo) %>%
   as("SpatialPixelsDataFrame") %>%
   as.data.frame() %>%
@@ -213,63 +242,143 @@ relief <- raster("input/02-relief-ascii.asc") %>%
 
 # clean up
 rm(country_geo)
-
 ```
 
 
-## Join Geodata with data
+### Join Geodata with Thematic Data
 
-```{r join data into shapefiles}
+In the following chunk, the municipality geodata is extended (joined) with the thematic data over each municipality's unique identifier, so we end up with a data frame consisting of the income data as well as the geometries. Note that the class of this resulting object is still `sf` as well as `data.frame`.
 
-# join into spatial data frame
-municipality_geo %<>%
-  left_join(data, by = c("GMDNR" = "bfs_id"))
-
-# make new shape by intersecting municipality geodata with productive areas
-# this is needed so the hillshading is visible on unproductive areas
-municipality_prod_geo <-
-  st_intersection(
-    municipality_geo,
-    productive_area
-  )
-
-# clean up
-rm(municipality_geo)
-
+```{r join data into shapefiles, echo=TRUE, message=FALSE, warning=FALSE}
+municipality_prod_geo %<>%
+  left_join(data, by = c("BFS_ID" = "bfs_id"))
+class(municipality_prod_geo)
 ```
 
+## Define a Map Theme
 
-```{r define clean theme without axis, grid lines and margins}
+We first define a unique theme for the map, e.g. remove all axes, add a subtle grid (that you might not be able to see on a bright screen) etc. We mostly took this from [a previous blog post](https://timogrossenbacher.ch/2018/03/categorical-spatial-interpolation-with-r/). 
 
-theme_clean <- function(...) {
-  theme_void() +
+```{r define clean theme, echo=TRUE, message=FALSE, warning=FALSE}
+theme_map <- function(...) {
+  theme_minimal() +
   theme(
+    text = element_text(family = "Ubuntu Regular", color = "#22211d"),
+    # remove all axes
     axis.line = element_blank(),
     axis.text.x = element_blank(),
     axis.text.y = element_blank(),
     axis.ticks = element_blank(),
     axis.title.x = element_blank(),
     axis.title.y = element_blank(),
+    # add a subtle grid
+    panel.grid.major = element_line(color = "#ebebe5", size = 0.2),
     panel.grid.minor = element_blank(),
-    # due to a bug in ggplot the panel grid major in combination
-    # with geom_sf does not work with element blank
-    # read more: https://github.com/tidyverse/ggplot2/issues/2071
-    panel.grid.major = element_line(colour = "transparent"),
-    panel.background = element_blank(),
-    plot.background = element_blank()
+    # background colors
+    plot.background = element_rect(fill = "#f5f5f2", color = NA), 
+    panel.background = element_rect(fill = "#f5f5f2", color = NA), 
+    legend.background = element_rect(fill = "#f5f5f2", color = NA),
+    # borders and margins
+    plot.margin = unit(c(.5, .5, .2, .5), "cm"),
+    panel.border = element_blank(),
+    panel.spacing = unit(c(-.1, 0.2, .2, 0.2), "cm"),
+    # titles
+    legend.title = element_text(size = 13),
+    legend.text = element_text(size = 11, hjust = 0, color = "#4e4d47"),
+    plot.title = element_text(size = 16, hjust = 0.5, color = "#4e4d47"),
+    plot.subtitle = element_text(size = 12, hjust = 0.5, color = "#4e4d47", 
+                                 margin = margin(b = -0.1, 
+                                                 t = -0.1, 
+                                                 l = 2, 
+                                                 unit = "cm"), 
+                                 debug = F),
+    # captions
+    plot.caption = element_text(size = 9, 
+                                # hjust = .5, 
+                                margin = margin(t = 0.2, 
+                                                b = 0, 
+                                                unit = "cm"), 
+                                color = "#939184"),
+    ...
   )
 }
-
 ```
 
-First, let's create a standard (univariate) thematic map based on the gini alone.
+## Create a Univariate Choropleth
 
-```{r thematic univariate map}
+First, let's create a standard (univariate) choropleth map based on the average income alone ("mean" variable). Beware: Rendering the relief takes some time!
+
+Without going into much detail, this is basically the same process as in the old blog post, detailed in the [respective section](https://timogrossenbacher.ch/2016/12/beautiful-thematic-maps-with-ggplot2-only/#discrete-classes-with-quantile-scale), just using `sf` instead of `sp`.
+
+1. We first calculate quantiles from the average income to form 6 different classes of average income (quantiles are used so each color class contains approximately the same amount of municipalities). From this, we generate a new variable "mean_quantiles" which is actually visualized on the map. We also generate custom labels for the classes.
+
+2. We generate the `ggplot2` object as follows:
+
+* Specify the data source and the main fill aesthetic (the visual variable showing the average income per municipality).
+* Add the Viridis color scale with the correct number of classes.
+* Add the relief through a call to `geom_raster()`.
+* Add a truncated alpha scale for the relief, as the "fill" aesthetic is already taken (refer to [this section](https://timogrossenbacher.ch/2016/12/beautiful-thematic-maps-with-ggplot2-only/#relief) for an explanation).
+* Use `geom_sf()` without an additional data argument to visualize municipal borders.
+* Use two more `geom_sf()` calls to add cantonal borders and lakes stemming from the `canton_geo` and `lake_geo` datasets, respectively.
+* Specify our previously defined map theme.
+* Add titles and subtitles.
+
+```{r thematic-univariate-map, echo=TRUE, message=FALSE, warning=FALSE}
+# define number of classes
+no_classes <- 6
+labels <- c()
+
+# extract quantiles
+quantiles <- municipality_prod_geo %>% 
+  pull(mean) %>%
+  quantile(probs = seq(0, 1, length.out = no_classes + 1))
+
+# here we define custom labels (the default ones would be ugly)
+labels <- c()
+for(idx in 1:length(quantiles)){
+  labels <- c(labels, paste0(round(quantiles[idx] / 1000, 0), 
+                             "k",
+                             " – ", 
+                             round(quantiles[idx + 1] / 1000, 0),
+                             "k CHF"))
+}
+
+# we need to remove the last label 
+# because that would be something like "478k - NA"
+labels <- labels[1:length(labels) - 1]
+
+# here we actually create a new 
+# variable on the dataset with the quantiles
+municipality_prod_geo %<>% 
+  mutate(mean_quantiles = cut(mean, 
+                               breaks = quantiles, 
+                               labels = labels, 
+                               include.lowest = T))
 
 ggplot(
-  municipality_prod_geo,
-  aes(fill = gini)
+  # define data and aesthetic mapping, which is just the fill
+  data = municipality_prod_geo,
+  mapping = aes(fill = mean_quantiles)
 ) +
+  # use the Viridis color scale
+  # the discrete-option is used, 
+  # and we use guide_legend instead of guide_colourbar
+  scale_fill_viridis(
+    option = "magma",
+    name = "Average income",
+    alpha = 0.8, # make fill a bit brighter
+    begin = 0.1, # this option seems to be new (compared to 2016): 
+    # with this we can truncate the 
+    # color scale, so tht extreme colors (very dark and very bright) are not
+    # used, which makes the map a bit more beautiful
+    end = 0.9,
+    discrete = T,
+    direction = 1, # dark is lowest, yellow is highest
+    guide = guide_legend(
+     keyheight = unit(5, units = "mm"),
+     title.position = 'top',
+     reverse = T # display highest income on top
+  )) +
   # first: draw the relief
   geom_raster(
     data = relief,
@@ -280,16 +389,18 @@ ggplot(
       alpha = value
     )
   ) +
-  # use the "alpha hack"
+  # use the "alpha hack" (as the "fill" aesthetic is already taken)
   scale_alpha(name = "", range = c(0.6, 0), guide = F)  +
-  # use thin white stroke for municipalities
+  # use thin white stroke for municipality borders
   geom_sf(
     color = "white",
     size = 0.1
   ) +
-  # use thicker white stroke for cantons
+  # use thicker white stroke for cantonal borders
   geom_sf(
     data = canton_geo,
+    # note the use of the handy inherit.aes so the previous "size" 
+    # specification can be overriden
     inherit.aes = FALSE,
     fill = "transparent",
     color = "white",
@@ -302,9 +413,18 @@ ggplot(
     fill = "#D6F1FF",
     color = "transparent"
   ) +
-  theme_clean()
+  # add theme
+  theme_map() +
+  # add titles
+  labs(x = NULL, 
+         y = NULL, 
+         title = "Switzerland's regional income", 
+         subtitle = "Average income in Swiss municipalities, 2015", 
+         caption = "Map CC-BY-SA\nAuthors: Timo Grossenbacher (@grssnbchr), Angelo Zehr (@angelozehr)\nGeometries: ThemaKart BFS and swisstopo; Data: ESTV, 2015")
 
 ```
+
+## Create a Bivariate Choropleth
 
 ### Create the bivariate color scale
 
@@ -430,7 +550,7 @@ ggplot(
     fill = "#D6F1FF",
     color = "transparent"
   ) +
-  theme_clean() +
+  theme_map() +
   geom_curve(
     aes(
       x = 772460,
@@ -454,11 +574,6 @@ ggplot(
     label = "Grey areas mean low\nincome but also low\ninequality",
     size = 3
   )
-
-ggsave(
-  "output/bivariate.png"
-)
-
 ```
 
 
