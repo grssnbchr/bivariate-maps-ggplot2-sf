@@ -19,7 +19,7 @@ if [ "$machine" != "Linux" -a "$machine" != "Mac" ]; then
 fi
 
 # find out checkpoint package date from main.Rmd
-package_date_raw="$(grep -E "package_date\s<-\s\"[0-9]{4}\-[0-9]{2}\-[0-9]{2}\"" analysis/main.Rmd -o)"
+package_date_raw="$(grep -E "package_date\s<-\s\"[0-9]{4}\-[0-9]{2}\-[0-9]{2}\"" analysis/index.Rmd -o)"
 # version_raw="$(grep -E "R_version\s<-\s\"[0-9]{1}\.[0-9]{1}\.[0-9]{1}\"" analysis/main.Rmd -o)"
 # extract substring for date
 package_date=${package_date_raw:16}
@@ -39,7 +39,7 @@ echo "setting $r_lib_path as R_LIBS"
 # set correct checkpoint folder, so main.Rmd is knitted with historical rmarkdown package
 export R_LIBS_USER=${r_lib_path}
 # env variable RSTUDIO has to be unset when running knit.sh in the built-in RStudio terminal
-R -e 'Sys.unsetenv("RSTUDIO"); library(rmarkdown); rmarkdown::render("analysis/index.md", "md_document")' --no-site-file --no-init-file --no-restore --no-save || { echo "ERROR: knitting failed."; exit 1; }
+R -e 'Sys.unsetenv("RSTUDIO"); library(rmarkdown); rmarkdown::render("analysis/index.Rmd", "md_document")' --no-site-file --no-init-file --no-restore --no-save || { echo "ERROR: knitting failed."; exit 1; }
 
 # open browser
 # TODO should probably be adapted for Mac OS
