@@ -39,7 +39,7 @@ echo "setting $r_lib_path as R_LIBS"
 # set correct checkpoint folder, so main.Rmd is knitted with historical rmarkdown package
 export R_LIBS_USER=${r_lib_path}
 # env variable RSTUDIO has to be unset when running knit.sh in the built-in RStudio terminal
-R -e 'Sys.unsetenv("RSTUDIO"); library(rmarkdown); rmarkdown::render("analysis/main.Rmd", "html_document")' --no-site-file --no-init-file --no-restore --no-save || { echo "ERROR: knitting failed."; exit 1; }
+R -e 'Sys.unsetenv("RSTUDIO"); library(rmarkdown); rmarkdown::render("analysis/index.md", "md_document")' --no-site-file --no-init-file --no-restore --no-save || { echo "ERROR: knitting failed."; exit 1; }
 
 # open browser
 # TODO should probably be adapted for Mac OS

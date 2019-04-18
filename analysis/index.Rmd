@@ -1,26 +1,29 @@
 ---
-title: "rddj-template"
-subtitle: "My analysis"
-author: "My Name"
-date: "October 2018"
+title: "Bivariate maps with ggplot2 and sf"
+author: "Timo Grossenbacher and Angelo Zehr"
+date: "April 18, 2019"
 output:
-  html_document:
-    code_folding: show
-    df_print: kable
+  md_document:
+    variant: markdown_phpextra+backtick_code_blocks
     toc: yes
-    toc_depth: 4
-    toc_float: 
-      collapsed: false
-      smooth_scroll: false
+    toc_depth: 3
+# output:
+#   html_document:
+#     code_folding: show
+#     df_print: kable
+#     toc: yes
+#     toc_depth: 4
+#     toc_float:
+#       collapsed: false
+#       smooth_scroll: false
 ---
-
 
 ```{r, echo=FALSE}
 # CONFIG
 user_name <- "grssnbchr" # your Git username (only needed if
 # you want to deploy to GH pages)
-project_name <- "rddj-template" # adapt!
-package_date <- "2018-09-01" # date of the CRAN snapshot that
+project_name <- "bivariate-maps-ggplot2-sf" # adapt!
+package_date <- "2019-03-01" # date of the CRAN snapshot that
 # the checkpoint package uses
 R_version <- "3.5.2" # R-Version to use
 options(Ncpus = 4) # use 4 cores for parallelized installation of packages
