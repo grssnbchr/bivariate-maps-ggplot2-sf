@@ -144,6 +144,7 @@ library(lintr) # code linting
 library(sf) # spatial data handling
 library(raster) # raster handling (needed for relief)
 library(viridis) # viridis color scale
+library(cowplot) # stack ggplots
 library(rmarkdown)",
 file = "manifest.R")
 ```
@@ -174,7 +175,7 @@ if (!dir.exists("~/.checkpoint")) {
 checkpoint(snapshotDate = package_date,
            project = path_to_wd,
            verbose = T,
-           scanForPackages = F,
+           scanForPackages = T,
            use.knitr = F,
            R.version = R_version)
 rm(package_date)
@@ -269,8 +270,6 @@ theme_map <- function(...) {
     axis.text.x = element_blank(),
     axis.text.y = element_blank(),
     axis.ticks = element_blank(),
-    axis.title.x = element_blank(),
-    axis.title.y = element_blank(),
     # add a subtle grid
     panel.grid.major = element_line(color = "#ebebe5", size = 0.2),
     panel.grid.minor = element_blank(),
@@ -357,8 +356,7 @@ municipality_prod_geo %<>%
 
 ggplot(
   # define data and aesthetic mapping, which is just the fill
-  data = municipality_prod_geo,
-  mapping = aes(fill = mean_quantiles)
+  data = municipality_prod_geo
 ) +
   # use the Viridis color scale
   # the discrete-option is used, 
@@ -380,28 +378,26 @@ ggplot(
      reverse = T # display highest income on top
   )) +
   # first: draw the relief
-  geom_raster(
-    data = relief,
-    inherit.aes = FALSE,
-    aes(
-      x = x,
-      y = y,
-      alpha = value
-    )
-  ) +
+  # geom_raster(
+  #   data = relief,
+  #   inherit.aes = FALSE,
+  #   aes(
+  #     x = x,
+  #     y = y,
+  #     alpha = value
+  #   )
+  # ) +
   # use the "alpha hack" (as the "fill" aesthetic is already taken)
   scale_alpha(name = "", range = c(0.6, 0), guide = F)  +
   # use thin white stroke for municipality borders
   geom_sf(
+    mapping = aes(fill = mean_quantiles),
     color = "white",
     size = 0.1
   ) +
   # use thicker white stroke for cantonal borders
   geom_sf(
     data = canton_geo,
-    # note the use of the handy inherit.aes so the previous "size" 
-    # specification can be overriden
-    inherit.aes = FALSE,
     fill = "transparent",
     color = "white",
     size = 0.5
@@ -409,7 +405,6 @@ ggplot(
   # draw lakes in light blue
   geom_sf(
     data = lake_geo,
-    inherit.aes = FALSE,
     fill = "#D6F1FF",
     color = "transparent"
   ) +
@@ -426,32 +421,37 @@ ggplot(
 
 ## Create a Bivariate Choropleth
 
-### Create the bivariate color scale
+In this last section, we finally create the bivariate map. For this, we first specify a bivariate color scale, using an external tool to find out the appropriate color values. Then we draw the map with basically the same logic as for the univariate map. We also come up with a possible design of a legend and that to the overall plot in the end.
 
-[Joshua Stevens](http://www.joshuastevens.net/cartography/make-a-bivariate-choropleth-map/) describes very well how to create the color codes for a sequential bivariate color schemes. Using Sketch we combined four rectangles with fill blue (#1E8CE3) and red (#C91024) each with four different opacities (20%, 40%, 60%, 80%) and blend mode multiply. Which resulted in the hex codes you see below.
+### Create the Bivariate Color Scale
 
-```{r prepare bivariate color scale with pretty breaks}
+[Joshua Stevens](http://www.joshuastevens.net/cartography/make-a-bivariate-choropleth-map/) describes very well how to create the color codes for a sequential bivariate color scheme. He also gives some background on readability and accessibility of such maps and thus we refrain from discussing these points here. Our blog post is intended to remain purely technical, also for the sake of space and reading time.
 
-# create 4 buckets for gini
-quantiles_gini <- quantile(
-  data$gini,
-  probs = seq(0, 1, length.out = 4)
-)
+Using the Sketch software we combined three rectangles with fill blue (base color #1E8CE3) and red (base color #C91024) each with three different opacities (20%, 50%, 80%) and blend mode "multiply", which resulted in the 3 * 3 = 9 hex values specified manually below. Side note: If somebody comes up with a handy way of "blending" hex values in R, or even knows a package for that, please notify us in the comments. A bit more of automation would be nice.
 
-knitr::kable(
-  quantiles_gini
-)
+By the way, this GIF from Joshua's blog shows the process of blending the two scales in an awesome fashion:
 
-# create 4 buckets for mean income
-quantiles_mean <- quantile(
-  data$mean,
-  probs = seq(0, 1, length.out = 4)
-)
+<img src="http://www.joshuastevens.net/images/js_bivariateMix.gif" width="100%" />
 
-knitr::kable(
-  quantiles_mean
-)
+```{r prepare bivariate color scale with pretty breaks, echo=TRUE, message=FALSE, warning=FALSE}
 
+# create 3 buckets for gini
+quantiles_gini <- data %>% 
+  pull(gini) %>% 
+  quantile(probs = seq(0, 1, length.out = 4))
+
+# output for inspection
+quantiles_gini
+
+# create 3 buckets for mean income
+quantiles_mean <- data %>% 
+  pull(mean) %>% 
+  quantile(probs = seq(0, 1, length.out = 4))
+
+# output for inspection
+quantiles_mean
+
+# pretty breaks
 # based on the values above, we manually define the breaks in a more human
 # readable way by rounding
 pretty_breaks_gini <- c(0, 0.4, 0.45, 1)
@@ -459,72 +459,78 @@ pretty_breaks_mean <- c(0, 35000, 40000, 1000000)
 
 # create color scale that encodes two variables
 # red for gini and blue for mean income
+# the special notation with gather is due to readibility reasons
 bivariate_color_scale <- tibble(
-  "3 - 3" = "#3F2949",
+  "3 - 3" = "#3F2949", # high inequality, high income
   "2 - 3" = "#435786",
-  "1 - 3" = "#4885C1",
+  "1 - 3" = "#4885C1", # low inequality, high income
   "3 - 2" = "#77324C",
-  "2 - 2" = "#806A8A",
+  "2 - 2" = "#806A8A", # medium inequality, medium income
   "1 - 2" = "#89A1C8",
-  "3 - 1" = "#AE3A4E",
+  "3 - 1" = "#AE3A4E", # high inequality, low income
   "2 - 1" = "#BC7C8F",
-  "1 - 1" = "#CABED0"
+  "1 - 1" = "#CABED0" # low inequality, low income
 ) %>%
   gather("group", "fill")
 
 ```
 
 
-### Join color codes into geodata
+### Join Color Codes Into Data
 
-```{r define which group each data entry belongs to}
+Here the municipalities are put into the appropriate class corresponding to their average income and income inequality.
 
+```{r join color codes bivariate, echo=TRUE, message=FALSE, warning=FALSE}
 # cut into groups defined above and join fill
 municipality_prod_geo %<>%
   mutate(
     gini_quantiles = cut(
       gini,
-      # you can also use the quantiles with unrounded values: quantiles_gini
+      # you could also use the quantiles with unrounded values: quantiles_gini
       breaks = pretty_breaks_gini,
       include.lowest = TRUE
     ),
     mean_quantiles = cut(
       mean,
-      # you can also use the quantiles with unrounded values: quantiles_mean
+      # you could also use the quantiles with unrounded values: quantiles_mean
       breaks = pretty_breaks_mean,
       include.lowest = TRUE
     ),
-    # by pasting the factores together as numbers we match the groups defined
+    # by pasting the factors together as numbers we match the groups defined
     # in the tibble bivariate_color_scale
     group = paste(
       as.numeric(gini_quantiles), "-",
       as.numeric(mean_quantiles)
     )
   ) %>%
+  # we now join the actual hex values per "group"
+  # so each municipality knows its hex value based on the his gini and avg 
+  # income value
   left_join(bivariate_color_scale, by = "group")
 
 ```
 
-### Draw bivariate thematic map
+### Draw the Map
 
-```{r}
+As said above, this is basically the same approach as above. What's special here is the 
 
-ggplot(
+```{r thematic bivariate map, echo=TRUE, message=FALSE, warning=FALSE}
+map <- ggplot(
   municipality_prod_geo,
   aes(
     fill = fill
   )
 ) +
   # first: draw the relief
-  geom_raster(
-    data = relief,
-    inherit.aes = FALSE,
-    aes(
-      x = x,
-      y = y,
-      alpha = value
-    )
-  ) +
+  # geom_raster(
+  #   data = relief,
+  #   inherit.aes = FALSE,
+  #   aes(
+  #     x = x,
+  #     y = y,
+  #     alpha = value
+  #   )
+  # ) +
   # use the "alpha hack"
   scale_alpha(name = "", range = c(0.6, 0), guide = F)  +
   # use thin white stroke for municipalities
@@ -573,9 +579,57 @@ ggplot(
     hjust = 0,
     label = "Grey areas mean low\nincome but also low\ninequality",
     size = 3
-  )
+  ) +
+  # add titles
+  labs(x = NULL, 
+         y = NULL, 
+         title = "Switzerland's regional income inequality", 
+         subtitle = "Average income and income inequality in Swiss municipalities, 2015", 
+         caption = "Map CC-BY-SA\nAuthors: Timo Grossenbacher (@grssnbchr), Angelo Zehr (@angelozehr)\nGeometries: ThemaKart BFS and swisstopo; Data: ESTV, 2015")
 ```
 
+### Draw the Legend
+
+For the legend we use the `geom_tile()` geometry of `ggplot2`. Before that, we have to quickly transform the `bivariate_color_scale` data frame, which contains all the hex values for all combinations of average income and income inequality classes.
+
+```{r bivariate-legend, echo=TRUE, message=FALSE, warning=FALSE}
+# separate the groups
+bivariate_color_scale %<>%
+  separate(group, into = c("gini", "mean"), sep = " - ") %>% 
+  mutate(gini = as.integer(gini),
+         mean = as.integer(mean))
+
+legend <- ggplot() +
+  geom_tile(
+    data = bivariate_color_scale,
+    mapping = aes(
+      x = gini,
+      y = mean,
+      fill = fill)
+  ) +
+  scale_fill_identity() +
+  labs(x = "Higher inequality ⟶️",
+       y = "Higher income ⟶️") +
+  theme_map() +
+  # make font small enough
+  theme(
+    axis.title = element_text(size = 4),
+  ) +
+  # quadratic tiles
+  coord_fixed()
+```
+
+### Combine Map and Legend
+
+Here we just combine the legend with the map using the `cowplot` packag. It allows to specify the exact position of plots on the canvas, and scaling the width and height of plots (as we do with the legend). It would have been nice to rotate the legend plot by 45° but we didn't find a way how to do this. 
+
+The numeric arguments to `draw_plot()` are basically trial and error.
+
+```{r thematic-bivariate-map-with-legend}
+ggdraw() +
+  draw_plot(map, 0, 0, 1, 1) +
+  draw_plot(legend, 0.15, 0.05, 0.2, 0.2)
+```
 
 ## Linting
 
