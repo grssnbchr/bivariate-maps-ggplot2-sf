@@ -507,18 +507,64 @@ municipality_prod_geo %<>%
 
 ### Draw bivariate thematic map
 
+In ggplot if you provide x and y coordinates directly in the `aes()` function you will get problems with anti-aliasing. For this reason we need to save all annotations that we want to make into a separate variable, that can be used as a data source in ggplot.
+
+To find out from where to where an annotation arrow should be drawn, go for example to <https://map.geo.admin.ch> and copy the x and y coordinates of the start and the end point of the arrow.
+
 ```{r}
 
-ggplot(
-  municipality_prod_geo,
-  aes(
-    fill = fill
+annotations <- tibble(
+  label = c(
+    "Grey areas mean\nlow income but also\nlow inequality",
+    "Blue areas mean\nhigh income but\nlow inequality",
+    "Violet areas mean\nhigh income and\nhigh inequality",
+    "Red areas mean\nlow income and\nhigh inequality"
+  ),
+  arrow_from = c(
+    "548921,232972", # grey
+    "771356,238335", # blue
+    "781136,125067", # violet
+    "616348,81869" # red
+  ),
+  arrow_to = c(
+    "622435,206784", # grey
+    "712671,261998", # blue
+    "786229,149597", # violet
+    "602334,122674" # red
+  ),
+  curvature = c(
+    0.2, # grey
+    0.1, # blue
+    -0.1, # violet
+    -0.2 # red
+  ),
+  nudge = c(
+    "-3000,0", # grey
+    "3000,5000", # blue
+    "0,-5000", # violet
+    "3000,0" # red
+  ),
+  just = c(
+    "1,0", # grey
+    "0,1", # blue
+    "0.5,1", # violet
+    "0,1" # red
   )
-) +
+) %>%
+  separate(arrow_from, into = c("x", "y")) %>%
+  separate(arrow_to, into = c("xend", "yend")) %>%
+  separate(nudge, into = c("nudge_x", "nudge_y"), sep = "\\,") %>%
+  separate(just, into = c("hjust", "vjust"), sep = "\\,")
+
+```
+
+
+```{r}
+
+g <- ggplot(municipality_prod_geo) +
   # first: draw the relief
   geom_raster(
     data = relief,
-    inherit.aes = FALSE,
     aes(
       x = x,
       y = y,
@@ -526,9 +572,12 @@ ggplot(
     )
   ) +
   # use the "alpha hack"
-  scale_alpha(name = "", range = c(0.6, 0), guide = F)  +
-  # use thin white stroke for municipalities
+  scale_alpha(name = "", range = c(0.6, 0), guide = F) +
   geom_sf(
+    aes(
+      fill = fill
+    ),
+    # use thin white stroke for municipalities
     color = "white",
     size = 0.1
   ) +
@@ -538,7 +587,6 @@ ggplot(
   # use thicker white stroke for cantons
   geom_sf(
     data = canton_geo,
-    inherit.aes = FALSE,
     fill = "transparent",
     color = "white",
     size = 0.5
@@ -546,34 +594,56 @@ ggplot(
   # draw lakes in light blue
   geom_sf(
     data = lake_geo,
-    inherit.aes = FALSE,
     fill = "#D6F1FF",
     color = "transparent"
   ) +
-  theme_map() +
-  geom_curve(
-    aes(
-      x = 772460,
-      xend = 731300,
-      y = 229782,
-      yend = 240300
-    ),
-    size = 0.2,
-    curvature = -0.2,
-    arrow = arrow(
-      length = unit(0.005, "npc")
-    )
-  ) +
-  geom_text(
-    aes(
-      x = 772460,
-      y = 229782
-    ),
-    nudge_x = 3000,
-    hjust = 0,
-    label = "Grey areas mean low\nincome but also low\ninequality",
-    size = 3
-  )
+  theme_map()
+
+# add annotations one by one by walking over the annotations data frame
+# this is necessary because we cannot define nudge_x, nudge_y and curvature
+# in the aes, driven by data
+annotations %>%
+  pwalk(function(...) {
+    # collect all values in the row in a one-rowed data frame
+    current <- tibble(...)
+
+    # convert all columns from x to vjust to numeric
+    # as pwalk makes a character out of everything
+    current %<>%
+      mutate_at(vars(x:vjust), as.numeric)
+    
+    print(current)
+
+    g <<- g +
+      geom_curve(
+        data = current,
+        aes(
+          x = x,
+          xend = xend,
+          y = y,
+          yend = yend
+        ),
+        curvature = current$curvature,
+        size = 0.2,
+        arrow = arrow(
+          length = unit(0.005, "npc")
+        )
+      ) +
+      geom_text(
+        data = current,
+        aes(
+          x = x,
+          y = y,
+          label = label,
+          hjust = hjust,
+          vjust = vjust
+        ),
+        nudge_x = current$nudge_x,
+        nudge_y = current$nudge_y,
+        size = 3
+      )
+  })
+
 ```
 
 
