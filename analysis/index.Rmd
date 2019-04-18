@@ -256,8 +256,7 @@ theme_clean <- function(...) {
     # read more: https://github.com/tidyverse/ggplot2/issues/2071
     panel.grid.major = element_line(colour = "transparent"),
     panel.background = element_blank(),
-    plot.background = element_blank(),
-    plot.margin = grid::unit(c(0, 0, 0, 0), "mm")
+    plot.background = element_blank()
   )
 }
 
@@ -431,7 +430,34 @@ ggplot(
     fill = "#D6F1FF",
     color = "transparent"
   ) +
-  theme_clean()
+  theme_clean() +
+  geom_curve(
+    aes(
+      x = 772460,
+      xend = 731300,
+      y = 229782,
+      yend = 240300
+    ),
+    size = 0.2,
+    curvature = -0.2,
+    arrow = arrow(
+      length = unit(0.005, "npc")
+    )
+  ) +
+  geom_text(
+    aes(
+      x = 772460,
+      y = 229782
+    ),
+    nudge_x = 3000,
+    hjust = 0,
+    label = "Grey areas mean low\nincome but also low\ninequality",
+    size = 3
+  )
+
+ggsave(
+  "output/bivariate.png"
+)
 
 ```
 
