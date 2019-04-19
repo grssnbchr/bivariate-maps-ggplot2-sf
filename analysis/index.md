@@ -85,7 +85,7 @@ from <https://github.com/grssnbchr/bivariate-maps-ggplot2-sf>.
 
 ### Version information {#version-information}
 
-This report was generated on 2019-04-19 11:03:35. R version: 3.5.2 on
+This report was generated on 2019-04-19 11:15:56. R version: 3.5.2 on
 x86\_64-pc-linux-gnu. For this report, CRAN packages as of 2019-03-01
 were used.
 
@@ -333,7 +333,8 @@ posts](https://timogrossenbacher.ch/2018/03/categorical-spatial-interpolation-wi
 theme_map <- function(...) {
   theme_minimal() +
   theme(
-    text = element_text(family = default_font_family, color = default_font_color),
+    text = element_text(family = default_font_family,
+                        color = default_font_color),
     # remove all axes
     axis.line = element_blank(),
     axis.text.x = element_blank(),
@@ -343,11 +344,11 @@ theme_map <- function(...) {
     panel.grid.major = element_line(color = "#ebebe5", size = 0.2),
     panel.grid.minor = element_blank(),
     # background colors
-    plot.background = element_rect(fill = default_background_color, 
-                                   color = NA), 
-    panel.background = element_rect(fill = default_background_color, 
-                                    color = NA), 
-    legend.background = element_rect(fill = default_background_color, 
+    plot.background = element_rect(fill = default_background_color,
+                                   color = NA),
+    panel.background = element_rect(fill = default_background_color,
+                                    color = NA),
+    legend.background = element_rect(fill = default_background_color,
                                      color = NA),
     # borders and margins
     plot.margin = unit(c(.5, .5, .2, .5), "cm"),
@@ -355,23 +356,23 @@ theme_map <- function(...) {
     panel.spacing = unit(c(-.1, 0.2, .2, 0.2), "cm"),
     # titles
     legend.title = element_text(size = 11),
-    legend.text = element_text(size = 9, hjust = 0, 
+    legend.text = element_text(size = 9, hjust = 0,
                                color = default_font_color),
-    plot.title = element_text(size = 16, hjust = 0.5, 
+    plot.title = element_text(size = 16, hjust = 0.5,
                               color = default_font_color),
-    plot.subtitle = element_text(size = 12, hjust = 0.5, 
-                                 color = default_font_color, 
-                                 margin = margin(b = -0.1, 
-                                                 t = -0.1, 
-                                                 l = 2, 
-                                                 unit = "cm"), 
+    plot.subtitle = element_text(size = 12, hjust = 0.5,
+                                 color = default_font_color,
+                                 margin = margin(b = -0.1,
+                                                 t = -0.1,
+                                                 l = 2,
+                                                 unit = "cm"),
                                  debug = F),
     # captions
-    plot.caption = element_text(size = 7, 
-                                hjust = .5, 
-                                margin = margin(t = 0.2, 
-                                                b = 0, 
-                                                unit = "cm"), 
+    plot.caption = element_text(size = 7,
+                                hjust = .5,
+                                margin = margin(t = 0.2,
+                                                b = 0,
+                                                unit = "cm"),
                                 color = "#939184"),
     ...
   )
@@ -419,16 +420,16 @@ just using `sf` instead of `sp`.
 no_classes <- 6
 
 # extract quantiles
-quantiles <- municipality_prod_geo %>% 
+quantiles <- municipality_prod_geo %>%
   pull(mean) %>%
-  quantile(probs = seq(0, 1, length.out = no_classes + 1)) %>% 
+  quantile(probs = seq(0, 1, length.out = no_classes + 1)) %>%
   as.vector() # to remove names of quantiles, so idx below is numeric
 
 # here we create custom labels
 labels <- imap_chr(quantiles, function(., idx){
-  return(paste0(round(quantiles[idx] / 1000, 0), 
+  return(paste0(round(quantiles[idx] / 1000, 0),
                              "k",
-                             " – ", 
+                             " – ",
                              round(quantiles[idx + 1] / 1000, 0),
                              "k"))
 })
@@ -439,10 +440,10 @@ labels <- labels[1:length(labels) - 1]
 
 # here we actually create a new 
 # variable on the dataset with the quantiles
-municipality_prod_geo %<>% 
-  mutate(mean_quantiles = cut(mean, 
-                               breaks = quantiles, 
-                               labels = labels, 
+municipality_prod_geo %<>%
+  mutate(mean_quantiles = cut(mean,
+                               breaks = quantiles,
+                               labels = labels,
                                include.lowest = T))
 
 ggplot(
@@ -460,9 +461,9 @@ ggplot(
     )
   ) +
   # use the "alpha hack" (as the "fill" aesthetic is already taken)
-  scale_alpha(name = "", 
-              range = c(0.6, 0), 
-              guide = F) + # suppress legend  
+  scale_alpha(name = "",
+              range = c(0.6, 0),
+              guide = F) + # suppress legend
   # add main fill aesthetic
   # use thin white stroke for municipality borders
   geom_sf(
@@ -475,10 +476,10 @@ ggplot(
   # use the Viridis color scale
   scale_fill_viridis(
     option = "magma",
-    name = "Average\nincome in CHF", 
+    name = "Average\nincome in CHF",
     alpha = 0.8, # make fill a bit brighter
-    begin = 0.1, # this option seems to be new (compared to 2016): 
-    # with this we can truncate the 
+    begin = 0.1, # this option seems to be new (compared to 2016):
+    # with this we can truncate the
     # color scale, so that extreme colors (very dark and very bright) are not
     # used, which makes the map a bit more aesthetic
     end = 0.9,
@@ -486,7 +487,7 @@ ggplot(
     direction = 1, # dark is lowest, yellow is highest
     guide = guide_legend(
      keyheight = unit(5, units = "mm"),
-     title.position = 'top',
+     title.position = "top",
      reverse = T # display highest income on top
   )) +
   # use thicker white stroke for cantonal borders
@@ -503,10 +504,10 @@ ggplot(
     color = "transparent"
   ) +
   # add titles
-  labs(x = NULL, 
-         y = NULL, 
-         title = "Switzerland's regional income", 
-         subtitle = "Average yearly income in Swiss municipalities, 2015", 
+  labs(x = NULL,
+         y = NULL,
+         title = "Switzerland's regional income",
+         subtitle = "Average yearly income in Swiss municipalities, 2015",
          caption = default_caption) +
   # add theme
   theme_map()
@@ -552,13 +553,13 @@ To match the 9 different colors with appropriate classes, we calculate
 
 ``` r
 # create 3 buckets for gini
-quantiles_gini <- data %>% 
-  pull(gini) %>% 
+quantiles_gini <- data %>%
+  pull(gini) %>%
   quantile(probs = seq(0, 1, length.out = 4))
 
 # create 3 buckets for mean income
-quantiles_mean <- data %>% 
-  pull(mean) %>% 
+quantiles_mean <- data %>%
+  pull(mean) %>%
   quantile(probs = seq(0, 1, length.out = 4))
 
 # create color scale that encodes two variables
@@ -605,7 +606,7 @@ municipality_prod_geo %<>%
     )
   ) %>%
   # we now join the actual hex values per "group"
-  # so each municipality knows its hex value based on the his gini and avg 
+  # so each municipality knows its hex value based on the his gini and avg
   # income value
   left_join(bivariate_color_scale, by = "group")
 ```
@@ -700,9 +701,9 @@ map <- ggplot(
     )
   ) +
   # use the "alpha hack" (as the "fill" aesthetic is already taken)
-  scale_alpha(name = "", 
-              range = c(0.6, 0), 
-              guide = F) + # suppress legend  
+  scale_alpha(name = "",
+              range = c(0.6, 0),
+              guide = F) + # suppress legend
   # color municipalities according to their gini / income combination
   geom_sf(
     aes(
@@ -730,9 +731,9 @@ map <- ggplot(
     color = "transparent"
   ) +
   # add titles
-  labs(x = NULL, 
-         y = NULL, 
-         title = "Switzerland's regional income (in-)equality", 
+  labs(x = NULL,
+         y = NULL,
+         title = "Switzerland's regional income (in-)equality",
          subtitle = paste0("Average yearly income and income",
                            " (in-)equality in Swiss municipalities, 2015"),
          caption = default_caption) +
@@ -860,159 +861,6 @@ package](https://github.com/jimhester/lintr), which is based on the
 lintr::lint("index.Rmd")
 ```
 
-    ## index.Rmd:78:17: style: Use <-, not =, for assignment.
-    ## default_caption = paste0("Map CC-BY-SA; Code:",
-    ##                 ^
-    ## index.Rmd:90:16: style: Only use double-quotes.
-    ##     fig.path = 'wp-content/uploads/2019/04/bm-',
-    ##                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    ## index.Rmd:281:1: style: lines should not be more than 80 characters.
-    ##     text = element_text(family = default_font_family, color = default_font_color),
-    ## ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    ## index.Rmd:291:68: style: Trailing whitespace is superfluous.
-    ##     plot.background = element_rect(fill = default_background_color, 
-    ##                                                                    ^
-    ## index.Rmd:292:48: style: Trailing whitespace is superfluous.
-    ##                                    color = NA), 
-    ##                                                ^
-    ## index.Rmd:293:69: style: Trailing whitespace is superfluous.
-    ##     panel.background = element_rect(fill = default_background_color, 
-    ##                                                                     ^
-    ## index.Rmd:294:49: style: Trailing whitespace is superfluous.
-    ##                                     color = NA), 
-    ##                                                 ^
-    ## index.Rmd:295:70: style: Trailing whitespace is superfluous.
-    ##     legend.background = element_rect(fill = default_background_color, 
-    ##                                                                      ^
-    ## index.Rmd:303:52: style: Trailing whitespace is superfluous.
-    ##     legend.text = element_text(size = 9, hjust = 0, 
-    ##                                                    ^
-    ## index.Rmd:305:54: style: Trailing whitespace is superfluous.
-    ##     plot.title = element_text(size = 16, hjust = 0.5, 
-    ##                                                      ^
-    ## index.Rmd:307:57: style: Trailing whitespace is superfluous.
-    ##     plot.subtitle = element_text(size = 12, hjust = 0.5, 
-    ##                                                         ^
-    ## index.Rmd:308:61: style: Trailing whitespace is superfluous.
-    ##                                  color = default_font_color, 
-    ##                                                             ^
-    ## index.Rmd:309:59: style: Trailing whitespace is superfluous.
-    ##                                  margin = margin(b = -0.1, 
-    ##                                                           ^
-    ## index.Rmd:310:59: style: Trailing whitespace is superfluous.
-    ##                                                  t = -0.1, 
-    ##                                                           ^
-    ## index.Rmd:311:56: style: Trailing whitespace is superfluous.
-    ##                                                  l = 2, 
-    ##                                                        ^
-    ## index.Rmd:312:63: style: Trailing whitespace is superfluous.
-    ##                                                  unit = "cm"), 
-    ##                                                               ^
-    ## index.Rmd:315:42: style: Trailing whitespace is superfluous.
-    ##     plot.caption = element_text(size = 7, 
-    ##                                          ^
-    ## index.Rmd:316:44: style: Trailing whitespace is superfluous.
-    ##                                 hjust = .5, 
-    ##                                            ^
-    ## index.Rmd:317:57: style: Trailing whitespace is superfluous.
-    ##                                 margin = margin(t = 0.2, 
-    ##                                                         ^
-    ## index.Rmd:318:55: style: Trailing whitespace is superfluous.
-    ##                                                 b = 0, 
-    ##                                                       ^
-    ## index.Rmd:319:62: style: Trailing whitespace is superfluous.
-    ##                                                 unit = "cm"), 
-    ##                                                              ^
-    ## index.Rmd:350:39: style: Trailing whitespace is superfluous.
-    ## quantiles <- municipality_prod_geo %>% 
-    ##                                       ^
-    ## index.Rmd:352:63: style: Trailing whitespace is superfluous.
-    ##   quantile(probs = seq(0, 1, length.out = no_classes + 1)) %>% 
-    ##                                                               ^
-    ## index.Rmd:357:49: style: Trailing whitespace is superfluous.
-    ##   return(paste0(round(quantiles[idx] / 1000, 0), 
-    ##                                                 ^
-    ## index.Rmd:359:36: style: Trailing whitespace is superfluous.
-    ##                              " – ", 
-    ##                                    ^
-    ## index.Rmd:370:27: style: Trailing whitespace is superfluous.
-    ## municipality_prod_geo %<>% 
-    ##                           ^
-    ## index.Rmd:371:36: style: Trailing whitespace is superfluous.
-    ##   mutate(mean_quantiles = cut(mean, 
-    ##                                    ^
-    ## index.Rmd:372:51: style: Trailing whitespace is superfluous.
-    ##                                breaks = quantiles, 
-    ##                                                   ^
-    ## index.Rmd:373:48: style: Trailing whitespace is superfluous.
-    ##                                labels = labels, 
-    ##                                                ^
-    ## index.Rmd:391:25: style: Trailing whitespace is superfluous.
-    ##   scale_alpha(name = "", 
-    ##                         ^
-    ## index.Rmd:392:33: style: Trailing whitespace is superfluous.
-    ##               range = c(0.6, 0), 
-    ##                                 ^
-    ## index.Rmd:393:45: style: Trailing whitespace is superfluous.
-    ##               guide = F) + # suppress legend  
-    ##                                             ^~
-    ## index.Rmd:406:37: style: Trailing whitespace is superfluous.
-    ##     name = "Average\nincome in CHF", 
-    ##                                     ^
-    ## index.Rmd:408:67: style: Trailing whitespace is superfluous.
-    ##     begin = 0.1, # this option seems to be new (compared to 2016): 
-    ##                                                                   ^
-    ## index.Rmd:409:36: style: Trailing whitespace is superfluous.
-    ##     # with this we can truncate the 
-    ##                                    ^
-    ## index.Rmd:417:23: style: Only use double-quotes.
-    ##      title.position = 'top',
-    ##                       ^~~~~
-    ## index.Rmd:434:17: style: Trailing whitespace is superfluous.
-    ##   labs(x = NULL, 
-    ##                 ^
-    ## index.Rmd:435:19: style: Trailing whitespace is superfluous.
-    ##          y = NULL, 
-    ##                   ^
-    ## index.Rmd:436:50: style: Trailing whitespace is superfluous.
-    ##          title = "Switzerland's regional income", 
-    ##                                                  ^
-    ## index.Rmd:437:75: style: Trailing whitespace is superfluous.
-    ##          subtitle = "Average yearly income in Swiss municipalities, 2015", 
-    ##                                                                           ^
-    ## index.Rmd:462:27: style: Trailing whitespace is superfluous.
-    ## quantiles_gini <- data %>% 
-    ##                           ^
-    ## index.Rmd:463:17: style: Trailing whitespace is superfluous.
-    ##   pull(gini) %>% 
-    ##                 ^
-    ## index.Rmd:467:27: style: Trailing whitespace is superfluous.
-    ## quantiles_mean <- data %>% 
-    ##                           ^
-    ## index.Rmd:468:17: style: Trailing whitespace is superfluous.
-    ##   pull(mean) %>% 
-    ##                 ^
-    ## index.Rmd:516:75: style: Trailing whitespace is superfluous.
-    ##   # so each municipality knows its hex value based on the his gini and avg 
-    ##                                                                           ^
-    ## index.Rmd:597:25: style: Trailing whitespace is superfluous.
-    ##   scale_alpha(name = "", 
-    ##                         ^
-    ## index.Rmd:598:33: style: Trailing whitespace is superfluous.
-    ##               range = c(0.6, 0), 
-    ##                                 ^
-    ## index.Rmd:599:45: style: Trailing whitespace is superfluous.
-    ##               guide = F) + # suppress legend  
-    ##                                             ^~
-    ## index.Rmd:627:17: style: Trailing whitespace is superfluous.
-    ##   labs(x = NULL, 
-    ##                 ^
-    ## index.Rmd:628:19: style: Trailing whitespace is superfluous.
-    ##          y = NULL, 
-    ##                   ^
-    ## index.Rmd:629:64: style: Trailing whitespace is superfluous.
-    ##          title = "Switzerland's regional income (in-)equality", 
-    ##                                                                ^
-    ## index.Rmd:695:61: style: Trailing whitespace is superfluous.
+    ## index.Rmd:696:61: style: Trailing whitespace is superfluous.
     ##   separate(group, into = c("gini", "mean"), sep = " - ") %>% 
     ##                                                             ^
