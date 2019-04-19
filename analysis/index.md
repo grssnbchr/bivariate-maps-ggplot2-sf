@@ -85,7 +85,7 @@ from <https://github.com/grssnbchr/bivariate-maps-ggplot2-sf>.
 
 ### Version information {#version-information}
 
-This report was generated on 2019-04-19 11:15:56. R version: 3.5.2 on
+This report was generated on 2019-04-19 11:31:14. R version: 3.5.2 on
 x86\_64-pc-linux-gnu. For this report, CRAN packages as of 2019-03-01
 were used.
 
@@ -787,7 +787,7 @@ annotations %>%
         # other styles
         family = default_font_family,
         color = default_font_color,
-        size = 2
+        size = 3
       )
   })
 ```
@@ -803,7 +803,7 @@ that can be mapped to the respective aesthetics.
 ``` r
 # separate the groups
 bivariate_color_scale %<>%
-  separate(group, into = c("gini", "mean"), sep = " - ") %>% 
+  separate(group, into = c("gini", "mean"), sep = " - ") %>%
   mutate(gini = as.integer(gini),
          mean = as.integer(mean))
 
@@ -849,18 +849,14 @@ That's it! We hoped you liked this tutorial. If you have any questions
 or remarks, or know a better way of doing things, please let us know in
 the comment section.
 
-You can also give us a shout on Twitter:
-\[@grssnbchr\](<https://twitter.com/grssnbchr>) and
-\[@angelozehr\](<https://twitter.com/angelozehr>).
+You can also give us a shout on Twitter: We're
+[grssnbchr](https://twitter.com/grssnbchr) and
+[angelozehr](https://twitter.com/angelozehr).
 
-The code in this RMarkdown is listed with the [lintr
+The code in this RMarkdown is linted with the [lintr
 package](https://github.com/jimhester/lintr), which is based on the
 [tidyverse style guide](http://style.tidyverse.org/).
 
 ``` r
 lintr::lint("index.Rmd")
 ```
-
-    ## index.Rmd:696:61: style: Trailing whitespace is superfluous.
-    ##   separate(group, into = c("gini", "mean"), sep = " - ") %>% 
-    ##                                                             ^

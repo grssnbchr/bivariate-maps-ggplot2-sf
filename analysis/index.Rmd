@@ -731,7 +731,7 @@ ggdraw() +
 
 That's it! We hoped you liked this tutorial. If you have any questions or remarks, or know a better way of doing things, please let us know in the comment section.
 
-You can also give us a shout on Twitter: [@grssnbchr](https://twitter.com/grssnbchr) and [@angelozehr](https://twitter.com/angelozehr).
+You can also give us a shout on Twitter: We're [grssnbchr](https://twitter.com/grssnbchr) and [angelozehr](https://twitter.com/angelozehr).
 
 The code in this RMarkdown is linted with the [lintr package](https://github.com/jimhester/lintr), which is based on the  [tidyverse style guide](http://style.tidyverse.org/). 
 
