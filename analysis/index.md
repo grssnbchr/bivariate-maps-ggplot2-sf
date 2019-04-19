@@ -1,68 +1,63 @@
--   [Bivariate maps with ggplot2 and
-    sf](#bivariate-maps-with-ggplot2-and-sf)
-    -   [Outline](#outline)
-    -   [Reproducibility](#reproducibility)
-    -   [Preparations](#preparations)
-    -   [Data Sources](#data-sources)
-    -   [Define a Map Theme](#define-a-map-theme)
-    -   [Create a Univariate
-        Choropleth](#create-a-univariate-choropleth)
-    -   [Create a Bivariate Choropleth](#create-a-bivariate-choropleth)
-    -   [Linting](#linting)
+-   [Outline](#outline)
+-   [Reproducibility](#reproducibility)
+-   [Preparations](#preparations)
+-   [Data Sources](#data-sources)
+-   [Define a Map Theme](#define-a-map-theme)
+-   [Create a Univariate Choropleth](#create-a-univariate-choropleth)
+-   [Create a Bivariate Choropleth](#create-a-bivariate-choropleth)
+-   [Linting](#linting)
 
-Bivariate maps with ggplot2 and sf {#bivariate-maps-with-ggplot2-and-sf}
-==================================
-
-<!-- <img src="https://timogrossenbacher.ch/wp-content/uploads/2018/03/csi-visualize-interpolation-1.png" width="100%" /> -->
 The above map shows income (in-)equality in Switzerland on the
 municipality level by visualizing two variables at the same time: [the
-Gini coefficient](https://en.wikipedia.org/wiki/Gini_coefficient), and
-average income (in Swiss Francs). It uses a so-called bivariate color
-scale, blending two different color scales into one. Lastly, it uses the
-beautiful relief depicting the mountainous Swiss landscape. Here we're
-going to show you how to produce such a map *exclusively with R*.
+Gini coefficient](https://en.wikipedia.org/wiki/Gini_coefficient) and
+average income (in Swiss Francs). It uses a so-called *bivariate color
+scale*, blending two different color scales into one. Lastly, it uses
+the beautiful relief depicting the mountainous Swiss landscape. Here
+we're going to show you how to produce such a map *exclusively with R*.
 
 For this blog post, I worked together with my colleague [Angelo
-Zehr](https://twitter.com/angelozehr), who recently published a [nice
+Zehr](https://twitter.com/angelozehr) who recently published a [nice
 bivariate thematic
 map](https://www.srf.ch/news/schweiz/interaktive-karte-so-ungleich-ist-das-einkommen-in-der-schweiz-verteilt)
-comparing income equality and average income in Switzerland. We took
-this opportunity to give a major update of my post on [thematic maps
-with
+comparing income (in-)equality and average income in Switzerland. We
+took this opportunity to give a major update of my post on [thematic
+maps with
 ggplot2](https://timogrossenbacher.ch/2016/12/beautiful-thematic-maps-with-ggplot2-only/)
 which is more than two years old, but still attracts hundreds of visits
-each week. What has changed since then?
+each week.
+
+**What is different from said post?**
 
 -   With the `sf` packacke and its integration into `ggplot2` through
-    the `geom_sf()` function, it is now even easier to quickly create
-    thematic maps.
--   In this post, we not only show how to produce a univariate map (with
-    one variable displayed) but also a bivariate map, where two
-    variables are displayed at the same time – using one visual variable
-    (or aesthetic in `ggplot2` terms) only, namely the "fill" variable.
-    As said above, this works by blending two color scales together.
--   This blog post also contains examples of a custom legend and
-    annotations.
+    the `geom_sf()` function, it is nowadays even easier to quickly
+    create thematic maps.
+-   This post does not only show how to produce a simple univariate
+    choropleth (another word for a thematic map where the (fill) color
+    is used as the main visual variable) but also how to combine two
+    variables into a bivariate color scale.
+-   It introduces *a suitable legend* for bivariate color scales using
+    `geom_tile()`.
+-   It shows how to add *annotations* that explain spatial patterns.
 
 Outline {#outline}
 -------
 
 This tutorial is structured as follows:
 
--   Read in the thematic data and geodata (no preprocessing required)
-    and join them.
+-   Read in the thematic data and geodata and join them.
 -   Define a general map theme.
--   Create a univariate thematic map ("choropleth") showing the average
-    income. This largely draws from [the late 2016 blog
+-   Create a univariate thematic map showing the average income. This
+    largely draws from [the previous
     post](https://timogrossenbacher.ch/2016/12/beautiful-thematic-maps-with-ggplot2-only)
     and involves techniques for custom color classes and advanced
-    aesthetics. *People who just want an update regarding `sf` and how
+    aesthetics. *People who merely want an update regarding `sf` and how
     it interacts with `ggplot2` can just read this section*.
--   Create a bivariate thematic map (also a "choropleth") showing
-    average income and income (in-)equality at the same time. In this
-    process, an unconvential legend is created and added to the plot,
-    and annotations explaining different spatial patterns are added as
-    well.
+-   Create a bivariate thematic map showing average income and income
+    (in-)equality at the same time. In this process, a custom legend is
+    created and added to the plot, and annotations explaining different
+    spatial patterns are added as well.
+-   Oh, and lakes and cantonal borders (cantons = Swiss provinces) are
+    now added as well.
 
 Let's go!
 
@@ -91,7 +86,7 @@ from <https://github.com/grssnbchr/bivariate-maps-ggplot2-sf>.
 
 ### Version information {#version-information}
 
-This report was generated on 2019-04-19 08:57:28. R version: 3.5.2 on
+This report was generated on 2019-04-19 10:39:15. R version: 3.5.2 on
 x86\_64-pc-linux-gnu. For this report, CRAN packages as of 2019-03-01
 were used.
 
@@ -100,29 +95,26 @@ Preparations {#preparations}
 
 ### Clear workspace and install necessary packages {#clear-workspace-and-install-necessary-packages}
 
-What follows from here until the section **Load Data** is just my usual
-routine: Detach all packages, remove all variables in the global
+What follows from here until the section **Data Sources** is just the
+usual routine: Detach all packages, remove all variables in the global
 environment, etc, and then load the packages from the MRAN server (a
-snapshot from March 1st, 2019). With this, I ensure [reproducibility and
-cross-device
+snapshot from March 1st, 2019). With this, we ensure [reproducibility
+and cross-device
 compatibility](https://timogrossenbacher.ch/2017/07/a-truly-reproducible-r-workflow/).
-I use my [freely available
+We use Timo's [freely available
 template](https://github.com/grssnbchr/rddj-template) for this, with
 some adaptions detailed under **Reproducibility**.
 
     ## [1] "package package:rmarkdown detached"
 
-    ## Loading required package: knitr
-
-    ## Loading required package: rstudioapi
-
 ### Define packages {#define-packages}
 
-For this project, we just used the usual suspects, i.e. `tidyverse`
-packages including `ggplot2` for plotting, `sf` for geodata processing
-and `raster` for working with (spatial) raster data, i.e. the relief.
-Also, the `viridis` package imports the beautiful Viridis color scale we
-use for the univariate map.
+For this project, we use the usual suspects, i.e. `tidyverse` packages
+including `ggplot2` for plotting, `sf` for geodata processing and
+`raster` for working with (spatial) raster data, i.e. the relief. Also,
+the `viridis` package imports the beautiful Viridis color scale we use
+for the univariate map. Lastly, `cowplot` is used to combine the
+bivariate map and its custom legend.
 
 ``` r
 # from https://mran.revolutionanalytics.com/web/packages/checkpoint/vignettes/using-checkpoint-with-knitr.html
@@ -141,6 +133,10 @@ file = "manifest.R")
 ```
 
 ### Install packages {#install-packages}
+
+If you're interested in what the following does, we recommend going
+through the explanations for
+[rddj-template](https://github.com/grssnbchr/rddj-template#more-about-checkpoint).
 
 ``` r
 # if checkpoint is not yet installed, install it (for people using this
@@ -234,18 +230,18 @@ Data Sources {#data-sources}
 Here the thematic data to be visualized is loaded. It is contained in a
 CSV consisting of columns:
 
--   "municipality (name)",
--   "bfs\_id" (ID to match with geodata),
--   "mean" (average income in the municipality)
--   "gini" (the Gini index for income (in-)equality)
+-   `municipality` (municipality name, not used),
+-   `bfs_id` (ID to match with geodata),
+-   `mean` (average income in the municipality)
+-   `gini` (the Gini index for income (in-)equality)
 
-The data provider in this case is the Swiss Federal Tax Administration,
-where the original data (as an Excel) can be [downloaded
-from](https://www.estv.admin.ch/dam/estv/de/dokumente/allgemein/Dokumentation/Zahlen_fakten/Steuerstatistiken/direkte_bundessteuer/np_statistische_kennzahlen_ohne/NP_2015_mitnull.xlsx.download.xlsx/NP_2015_mitnull.xlsx).
-The columns used were "mean\_reinka" and "gini\_reinka" for "mean" and
-"gini" (in the "Gemeinden - Communes" tab), respectively. See the first
+The data provider in this case is the Swiss Federal Tax Administration
+(FTA), where the original data (as an Excel) can be [downloaded from
+here](https://www.estv.admin.ch/dam/estv/de/dokumente/allgemein/Dokumentation/Zahlen_fakten/Steuerstatistiken/direkte_bundessteuer/np_statistische_kennzahlen_ohne/NP_2015_mitnull.xlsx.download.xlsx/NP_2015_mitnull.xlsx).
+The columns used were `mean_reinka` and `gini_reinka` for `mean` and
+`gini` (in the "Gemeinden - Communes" tab), respectively. See the first
 tabs in the Excel for a short explanation. Find additional explanations
-on [the SFTA website
+on [the FTA website
 (German)](https://www.estv.admin.ch/estv/de/home/allgemein/steuerstatistiken/fachinformationen/steuerstatistiken/direkte-bundessteuer.html),
 especially in [this
 PDF](https://www.estv.admin.ch/dam/estv/de/dokumente/allgemein/Dokumentation/Zahlen_fakten/Steuerstatistiken/direkte_bundessteuer/np_statistische_kennzahlen_ohne/Einleitung.pdf.download.pdf/1-Einleitung_NP_d.pdf).
@@ -259,9 +255,9 @@ data <- read_csv("input/data.csv")
 
 ### Geodata {#geodata}
 
-Various geodata from the Swiss Federal Statistical Office and the Swiss
-Federal Office of Topography (swisstopo) depicting Swiss borders as of
-2015 are used herein.
+Various geodata from the Swiss Federal Statistical Office (FSO) and the
+Swiss Federal Office of Topography (swisstopo) depicting Swiss borders
+as of 2015 are used herein.
 
 -   `input/gde-1-1-15.*`: These geometries do not show the political
     borders of Swiss municipalities, but the so-called "productive"
@@ -269,16 +265,15 @@ Federal Office of Topography (swisstopo) depicting Swiss borders as of
     mountains are excluded. This has two advantages: 1) The relatively
     sparsely populated but very large municipalities in the Alps don't
     have too much visual weight and 2) it allows us to use the beautiful
-    raster relief of the Alps as a background. The data are also from
+    raster relief of the Alps as a background. These data are also from
     the FSO, but not freely available. I was allowed to republish the
     Shapefile for this educational purpose (also included in the `input`
     folder). Please stick to that policy.
 -   `input/g2*`: National (`s`) as well as cantonal borders (`k`) and
     lakes (`l`). Available
     [here](https://www.bfs.admin.ch/bfs/de/home/dienstleistungen/geostat/geodaten-bundesstatistik/administrative-grenzen/generalisierte-gemeindegrenzen.html).
--   (Hillshaded) relief: This is a freely available GeoTIFF from [the
-    Swiss Federal Office of Topography
-    (swisstopo)](https://shop.swisstopo.admin.ch/en/products/maps/national/digital/srm1000).
+-   (Hillshaded) relief: This is a freely available GeoTIFF from
+    [swisstopo](https://shop.swisstopo.admin.ch/en/products/maps/national/digital/srm1000).
     For the sake of simplicity, it was converted to the "ESRI ASCII"
     format using
     `gdal_translate -of AAIGrid 02-relief-georef.tif 02-relief-ascii.asc`
@@ -315,7 +310,7 @@ rm(country_geo)
 
 In the following chunk, the municipality geodata is extended (joined)
 with the thematic data over each municipality's unique identifier, so we
-end up with a data frame consisting of the income data as well as the
+end up with a data frame consisting of the thematic data as well as the
 geometries. Note that the class of this resulting object is still `sf`
 as well as `data.frame`.
 
@@ -332,7 +327,7 @@ Define a Map Theme {#define-a-map-theme}
 
 We first define a unique theme for the map, e.g. remove all axes, add a
 subtle grid (that you might not be able to see on a bright screen) etc.
-We mostly took this from [another of Timo's blog
+We mostly copied this from [another of Timo's blog
 posts](https://timogrossenbacher.ch/2018/03/categorical-spatial-interpolation-with-r/).
 
 ``` r
@@ -357,8 +352,8 @@ theme_map <- function(...) {
     panel.border = element_blank(),
     panel.spacing = unit(c(-.1, 0.2, .2, 0.2), "cm"),
     # titles
-    legend.title = element_text(size = 13),
-    legend.text = element_text(size = 11, hjust = 0, color = "#4e4d47"),
+    legend.title = element_text(size = 11),
+    legend.text = element_text(size = 9, hjust = 0, color = "#4e4d47"),
     plot.title = element_text(size = 16, hjust = 0.5, color = "#4e4d47"),
     plot.subtitle = element_text(size = 12, hjust = 0.5, color = "#4e4d47", 
                                  margin = margin(b = -0.1, 
@@ -382,10 +377,10 @@ Create a Univariate Choropleth {#create-a-univariate-choropleth}
 ------------------------------
 
 First, let's create a standard (univariate) choropleth map based on the
-average income alone ("mean" variable).
+average income alone, i.e. the `mean` variable.
 
 Without going into much detail, this is basically the same process as in
-the old blog post, detailed in the [respective
+the 2016 blog post, detailed in the [respective
 section](https://timogrossenbacher.ch/2016/12/beautiful-thematic-maps-with-ggplot2-only/#discrete-classes-with-quantile-scale),
 just using `sf` instead of `sp`.
 
@@ -393,21 +388,21 @@ just using `sf` instead of `sp`.
     different classes of average income (quantiles are used so each
     color class contains approximately the same amount of
     municipalities). From this, we generate a new variable
-    "mean\_quantiles" which is actually visualized on the map. We also
+    `mean_quantiles` which is actually visualized on the map. We also
     generate custom labels for the classes.
 
-2.  We generate the `ggplot2` object as follows:
+2.  We generate and draw the `ggplot2` object as follows:
 
--   Specify the data source and the main fill aesthetic (the visual
-    variable showing the average income per municipality).
--   Add the Viridis color scale with the correct number of classes.
+-   Specify the main data source.
 -   Add the relief through a call to `geom_raster()`.
 -   Add a truncated alpha scale for the relief, as the "fill" aesthetic
     is already taken (refer to [this
     section](https://timogrossenbacher.ch/2016/12/beautiful-thematic-maps-with-ggplot2-only/#relief)
     for an explanation).
--   Use `geom_sf()` without an additional data argument to visualize
-    municipal borders.
+-   Use `geom_sf()` without an additional data argument to specify the
+    main fill aesthetic (the visual variable showing the average income
+    per municipality) and to visualize municipal borders.
+-   Add the Viridis color scale for that fill aesthetic.
 -   Use two more `geom_sf()` calls to add cantonal borders and lakes
     stemming from the `canton_geo` and `lake_geo` datasets,
     respectively.
@@ -417,22 +412,21 @@ just using `sf` instead of `sp`.
 ``` r
 # define number of classes
 no_classes <- 6
-labels <- c()
 
 # extract quantiles
 quantiles <- municipality_prod_geo %>% 
   pull(mean) %>%
-  quantile(probs = seq(0, 1, length.out = no_classes + 1))
+  quantile(probs = seq(0, 1, length.out = no_classes + 1)) %>% 
+  as.vector() # to remove names of quantiles, so idx below is numeric
 
-# here we define custom labels (the default ones would be ugly)
-labels <- c()
-for(idx in 1:length(quantiles)){
-  labels <- c(labels, paste0(round(quantiles[idx] / 1000, 0), 
+# here we create custom labels
+labels <- imap_chr(quantiles, function(., idx){
+  return(paste0(round(quantiles[idx] / 1000, 0), 
                              "k",
                              " – ", 
                              round(quantiles[idx + 1] / 1000, 0),
-                             "k CHF"))
-}
+                             "k"))
+})
 
 # we need to remove the last label 
 # because that would be something like "478k - NA"
@@ -447,46 +441,49 @@ municipality_prod_geo %<>%
                                include.lowest = T))
 
 ggplot(
-  # define data and aesthetic mapping, which is just the fill
+  # define main data source
   data = municipality_prod_geo
 ) +
+  # first: draw the relief
+  geom_raster(
+    data = relief,
+    inherit.aes = FALSE,
+    aes(
+      x = x,
+      y = y,
+      alpha = value
+    )
+  ) +
+  # use the "alpha hack" (as the "fill" aesthetic is already taken)
+  scale_alpha(name = "", 
+              range = c(0.6, 0), 
+              guide = F) + # suppress legend  
+  # add main fill aesthetic
+  # use thin white stroke for municipality borders
+  geom_sf(
+    mapping = aes(
+      fill = mean_quantiles
+      ),
+    color = "white",
+    size = 0.1
+  ) +
   # use the Viridis color scale
-  # the discrete-option is used, 
-  # and we use guide_legend instead of guide_colourbar
   scale_fill_viridis(
     option = "magma",
-    name = "Average income",
+    name = "Average\nincome in CHF", 
     alpha = 0.8, # make fill a bit brighter
     begin = 0.1, # this option seems to be new (compared to 2016): 
     # with this we can truncate the 
-    # color scale, so tht extreme colors (very dark and very bright) are not
-    # used, which makes the map a bit more beautiful
+    # color scale, so that extreme colors (very dark and very bright) are not
+    # used, which makes the map a bit more aesthetic
     end = 0.9,
-    discrete = T,
+    discrete = T, # discrete classes, thus guide_legend instead of _colorbar
     direction = 1, # dark is lowest, yellow is highest
     guide = guide_legend(
      keyheight = unit(5, units = "mm"),
      title.position = 'top',
      reverse = T # display highest income on top
   )) +
-  # first: draw the relief
-  # geom_raster(
-  #   data = relief,
-  #   inherit.aes = FALSE,
-  #   aes(
-  #     x = x,
-  #     y = y,
-  #     alpha = value
-  #   )
-  # ) +
-  # use the "alpha hack" (as the "fill" aesthetic is already taken)
-  scale_alpha(name = "", range = c(0.6, 0), guide = F)  +
-  # use thin white stroke for municipality borders
-  geom_sf(
-    mapping = aes(fill = mean_quantiles),
-    color = "white",
-    size = 0.1
-  ) +
   # use thicker white stroke for cantonal borders
   geom_sf(
     data = canton_geo,
@@ -500,17 +497,21 @@ ggplot(
     fill = "#D6F1FF",
     color = "transparent"
   ) +
-  # add theme
-  theme_map() +
   # add titles
   labs(x = NULL, 
          y = NULL, 
          title = "Switzerland's regional income", 
-         subtitle = "Average income in Swiss municipalities, 2015", 
+         subtitle = "Average yearly income in Swiss municipalities, 2015", 
          caption = paste0("Map CC-BY-SA\nAuthors: Timo Grossenbacher",
                           " (@grssnbchr), Angelo Zehr (@angelozehr)",
                           "\nGeometries: ThemaKart BFS and swisstopo;",
-                          " Data: ESTV, 2015"))
+                          " Data: ESTV, 2015")) +
+  # add theme
+  theme_map() +
+  # center caption
+  theme(
+    plot.caption = element_text(hjust = .5)
+  )
 ```
 
 <img src="wp-content/uploads/2019/04/bm-thematic-univariate-map-1.png" width="100%" />
@@ -518,8 +519,8 @@ ggplot(
 Create a Bivariate Choropleth {#create-a-bivariate-choropleth}
 -----------------------------
 
-In this last section, we finally create the bivariate map. For this, we
-first specify a bivariate color scale, using an external tool to
+In this last section, we eventually create the bivariate map. For this,
+we first specify a bivariate color scale, using an external software to
 calculate the appropriate color values. Then we draw the map with
 basically the same logic as for the univariate map. We then add custom
 annotations to the map. Lastly, we come up with a possible design of a
@@ -529,24 +530,27 @@ legend and add that to the overall plot in the end.
 
 [Joshua
 Stevens](http://www.joshuastevens.net/cartography/make-a-bivariate-choropleth-map/)
-describes very well how to create the color codes for a sequential
+has a nice write-up on how to create the color codes for a sequential
 bivariate color scheme. He also gives some background on readability and
-accessibility of such maps and thus we refrain from discussing these
-points here. Our blog post is intended to remain purely technical, also
-for the sake of space and reading time.
+accessibility of such maps and *thus we refrain from discussing these
+points here*. Our blog post is intended to remain purely technical, also
+for the sake of conciceness and reading time.
 
-Using the Sketch software we combined three rectangles with fill blue
-(base color \#1E8CE3) and red (base color \#C91024) each with three
-different opacities (20%, 50%, 80%) and blend mode "multiply", which
+Using the "Sketch" software we combined two scales with fill "blue"
+(base color \#1E8CE3) and "red" (base color \#C91024), each with three
+different opacities (20%, 50%, 80%), and blend mode "multiply", which
 resulted in the 3 \* 3 = 9 hex values specified manually below. Side
 note: If somebody comes up with a handy way of "blending" hex values in
-R, or even knows a package for that, please notify us in the comments. A
-bit more of automation would be nice.
+R, or even knows a package for that, please notify us in the comments.
+Automation never hurts.
 
-By the way, this GIF from Joshua's blog shows the process of blending
-the two scales in an awesome fashion:
+This GIF from Joshua's blog nicely shows the process of blending the two
+scales:
 
 <img src="http://www.joshuastevens.net/images/js_bivariateMix.gif" width="100%" />
+
+To match the 9 different colors with appropriate classes, we calculate
+1/3-quantiles for both variables.
 
 ``` r
 # create 3 buckets for gini
@@ -554,32 +558,10 @@ quantiles_gini <- data %>%
   pull(gini) %>% 
   quantile(probs = seq(0, 1, length.out = 4))
 
-# output for inspection
-quantiles_gini
-```
-
-    ##        0% 33.33333% 66.66667%      100% 
-    ##     0.264     0.398     0.436     0.936
-
-``` r
 # create 3 buckets for mean income
 quantiles_mean <- data %>% 
   pull(mean) %>% 
   quantile(probs = seq(0, 1, length.out = 4))
-
-# output for inspection
-quantiles_mean
-```
-
-    ##        0% 33.33333% 66.66667%      100% 
-    ##  16603.00  35353.33  41187.33 478065.00
-
-``` r
-# pretty breaks
-# based on the values above, we manually define the breaks in a more human
-# readable way by rounding
-pretty_breaks_gini <- c(0, 0.4, 0.45, 1)
-pretty_breaks_mean <- c(0, 35000, 40000, 1000000)
 
 # create color scale that encodes two variables
 # red for gini and blue for mean income
@@ -601,7 +583,7 @@ bivariate_color_scale <- tibble(
 ### Join Color Codes to the Data {#join-color-codes-to-the-data}
 
 Here the municipalities are put into the appropriate class corresponding
-to their average income and income inequality.
+to their average income and income (in-)equality.
 
 ``` r
 # cut into groups defined above and join fill
@@ -609,14 +591,12 @@ municipality_prod_geo %<>%
   mutate(
     gini_quantiles = cut(
       gini,
-      # you could also use the quantiles with unrounded values: quantiles_gini
-      breaks = pretty_breaks_gini,
+      breaks = quantiles_gini,
       include.lowest = TRUE
     ),
     mean_quantiles = cut(
       mean,
-      # you could also use the quantiles with unrounded values: quantiles_mean
-      breaks = pretty_breaks_mean,
+      breaks = quantiles_mean,
       include.lowest = TRUE
     ),
     # by pasting the factors together as numbers we match the groups defined
@@ -635,17 +615,19 @@ municipality_prod_geo %<>%
 ### Draw the Map {#draw-the-map}
 
 As said above, this is basically the same approach as in the univariate
-case What's special here is the
+case, except for the custom legend and annotations.
 
-We found out that with this version of `ggplot2`, if you provide x- and
-y- coordinates directly in the `aes()` function of `geom_text()` and
-`geom_curve()`, you will get problems with anti-aliasing. For this
-reason we need to save all annotations that we want to make into a
-separate data frame that can be used as a data source for the respective
-geometries.
+Adding the annotations is a bit cumbersome because the `curvature` and
+`nudge_*` arguments cannot be specified as data-driven aesthetics for
+`geom_curve()` and `geom_text()`, respectively. However, we need them to
+be data-driven, as we don't want to specify the same curvature for all
+arrows, for example. For this reason we need to save all annotations
+into a separate data frame. We then call `geom_curve()` and
+`geom_text()` separately for each annotation to specify dynamic
+`curvature` and `nudge_*` arguments.
 
 To find out from where to where an annotation arrow should be drawn, we
-went to the awesome [Swiss national map](https://map.geo.admin.ch) and
+looked at the [Swiss national map](https://map.geo.admin.ch) and
 manually extracted the x- and y- coordinates of the start and the end
 point of the arrow.
 
@@ -694,6 +676,17 @@ annotations <- tibble(
   separate(just, into = c("hjust", "vjust"), sep = "\\,")
 ```
 
+Now that the `annotations` data frame is ready, we can do the following:
+
+-   Specify a basic map `ggplot2` object, following the same order as in
+    the univariate case (we use `scale_fill_identity()` instead of the
+    Viridis color scale).
+-   We then loop over each row of the `annotations` data frame and add
+    each annotation (`geom_curve()` and `geom_text()` calls) to the
+    `map` object one by one.
+-   Note that we need to manually specify the font family for the labels
+    again.
+
 ``` r
 map <- ggplot(
   # use the same dataset as before
@@ -708,8 +701,11 @@ map <- ggplot(
       alpha = value
     )
   ) +
-  # use the "alpha hack"
-  scale_alpha(name = "", range = c(0.6, 0), guide = F) +
+  # use the "alpha hack" (as the "fill" aesthetic is already taken)
+  scale_alpha(name = "", 
+              range = c(0.6, 0), 
+              guide = F) + # suppress legend  
+  # color municipalities according to their gini / income combination
   geom_sf(
     aes(
       fill = fill
@@ -738,9 +734,9 @@ map <- ggplot(
   # add titles
   labs(x = NULL, 
          y = NULL, 
-         title = "Switzerland's regional income inequality", 
-         subtitle = paste0("Average income and income",
-                           " inequality in Swiss municipalities, 2015"),
+         title = "Switzerland's regional income (in-)equality", 
+         subtitle = paste0("Average yearly income and income",
+                           " (in-)equality in Swiss municipalities, 2015"),
          caption = paste0("Map CC-BY-SA\nAuthors: Timo Grossenbacher",
                           " (@grssnbchr), Angelo Zehr (@angelozehr)",
                           "\nGeometries: ThemaKart BFS and swisstopo;",
@@ -772,7 +768,8 @@ annotations %>%
           y = y,
           yend = yend
         ),
-        curvature = current$curvature,
+        # that's the whole point of doing this loop:
+        curvature = current %>% pull(curvature),
         size = 0.2,
         arrow = arrow(
           length = unit(0.005, "npc")
@@ -788,8 +785,11 @@ annotations %>%
           hjust = hjust,
           vjust = vjust
         ),
-        nudge_x = current$nudge_x,
-        nudge_y = current$nudge_y,
+        # that's the whole point of doing this loop:
+        nudge_x = current %>% pull(nudge_x),
+        nudge_y = current %>% pull(nudge_y),
+        family = "Ubuntu Regular",
+        color = "#4e4d47",
         size = 3
       )
   })
@@ -800,7 +800,8 @@ annotations %>%
 For the legend we use the `geom_tile()` geometry of `ggplot2`. Before
 that, we have to quickly transform the `bivariate_color_scale` data
 frame, which contains all the hex values for all combinations of average
-income and income inequality classes, so it has an x- and y-column.
+income and income (in-)equality classes, so it has an x- and y-column
+that can be mapped to the respective aesthetics.
 
 ``` r
 # separate the groups
@@ -823,7 +824,7 @@ legend <- ggplot() +
   theme_map() +
   # make font small enough
   theme(
-    axis.title = element_text(size = 4),
+    axis.title = element_text(size = 6),
   ) +
   # quadratic tiles
   coord_fixed()
@@ -842,7 +843,7 @@ The numeric arguments to `draw_plot()` are basically trial and error.
 ``` r
 ggdraw() +
   draw_plot(map, 0, 0, 1, 1) +
-  draw_plot(legend, 0.15, 0.05, 0.2, 0.2)
+  draw_plot(legend, 0.05, 0.05, 0.2, 0.2)
 ```
 
 <img src="wp-content/uploads/2019/04/bm-thematic-bivariate-map-with-legend-1.png" width="100%" />
@@ -858,54 +859,54 @@ package](https://github.com/jimhester/lintr), which is based on the
 lintr::lint("index.Rmd")
 ```
 
-    ## index.Rmd:80:16: style: Only use double-quotes.
+    ## index.Rmd:79:16: style: Only use double-quotes.
     ##     fig.path = 'wp-content/uploads/2019/04/bm-',
     ##                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    ## index.Rmd:278:66: style: Trailing whitespace is superfluous.
+    ## index.Rmd:279:66: style: Trailing whitespace is superfluous.
     ##     plot.background = element_rect(fill = "#f5f5f2", color = NA), 
     ##                                                                  ^
-    ## index.Rmd:279:67: style: Trailing whitespace is superfluous.
+    ## index.Rmd:280:67: style: Trailing whitespace is superfluous.
     ##     panel.background = element_rect(fill = "#f5f5f2", color = NA), 
     ##                                                                   ^
-    ## index.Rmd:289:76: style: Trailing whitespace is superfluous.
+    ## index.Rmd:290:76: style: Trailing whitespace is superfluous.
     ##     plot.subtitle = element_text(size = 12, hjust = 0.5, color = "#4e4d47", 
     ##                                                                            ^
-    ## index.Rmd:290:59: style: Trailing whitespace is superfluous.
+    ## index.Rmd:291:59: style: Trailing whitespace is superfluous.
     ##                                  margin = margin(b = -0.1, 
     ##                                                           ^
-    ## index.Rmd:291:59: style: Trailing whitespace is superfluous.
+    ## index.Rmd:292:59: style: Trailing whitespace is superfluous.
     ##                                                  t = -0.1, 
     ##                                                           ^
-    ## index.Rmd:292:56: style: Trailing whitespace is superfluous.
+    ## index.Rmd:293:56: style: Trailing whitespace is superfluous.
     ##                                                  l = 2, 
     ##                                                        ^
-    ## index.Rmd:293:63: style: Trailing whitespace is superfluous.
+    ## index.Rmd:294:63: style: Trailing whitespace is superfluous.
     ##                                                  unit = "cm"), 
     ##                                                               ^
-    ## index.Rmd:296:42: style: Trailing whitespace is superfluous.
+    ## index.Rmd:297:42: style: Trailing whitespace is superfluous.
     ##     plot.caption = element_text(size = 9, 
     ##                                          ^
-    ## index.Rmd:297:46: style: Trailing whitespace is superfluous.
+    ## index.Rmd:298:46: style: Trailing whitespace is superfluous.
     ##                                 # hjust = .5, 
     ##                                              ^
-    ## index.Rmd:298:57: style: Trailing whitespace is superfluous.
+    ## index.Rmd:299:57: style: Trailing whitespace is superfluous.
     ##                                 margin = margin(t = 0.2, 
     ##                                                         ^
-    ## index.Rmd:299:55: style: Trailing whitespace is superfluous.
+    ## index.Rmd:300:55: style: Trailing whitespace is superfluous.
     ##                                                 b = 0, 
     ##                                                       ^
-    ## index.Rmd:300:62: style: Trailing whitespace is superfluous.
+    ## index.Rmd:301:62: style: Trailing whitespace is superfluous.
     ##                                                 unit = "cm"), 
     ##                                                              ^
     ## index.Rmd:332:39: style: Trailing whitespace is superfluous.
     ## quantiles <- municipality_prod_geo %>% 
     ##                                       ^
-    ## index.Rmd:338:4: style: Place a space before left parenthesis, except in a function call.
-    ## for(idx in 1:length(quantiles)){
-    ##    ^
-    ## index.Rmd:339:62: style: Trailing whitespace is superfluous.
-    ##   labels <- c(labels, paste0(round(quantiles[idx] / 1000, 0), 
-    ##                                                              ^
+    ## index.Rmd:334:63: style: Trailing whitespace is superfluous.
+    ##   quantile(probs = seq(0, 1, length.out = no_classes + 1)) %>% 
+    ##                                                               ^
+    ## index.Rmd:339:49: style: Trailing whitespace is superfluous.
+    ##   return(paste0(round(quantiles[idx] / 1000, 0), 
+    ##                                                 ^
     ## index.Rmd:341:36: style: Trailing whitespace is superfluous.
     ##                              " – ", 
     ##                                    ^
@@ -921,57 +922,72 @@ lintr::lint("index.Rmd")
     ## index.Rmd:355:48: style: Trailing whitespace is superfluous.
     ##                                labels = labels, 
     ##                                                ^
-    ## index.Rmd:363:33: style: Trailing whitespace is superfluous.
-    ##   # the discrete-option is used, 
+    ## index.Rmd:373:25: style: Trailing whitespace is superfluous.
+    ##   scale_alpha(name = "", 
+    ##                         ^
+    ## index.Rmd:374:33: style: Trailing whitespace is superfluous.
+    ##               range = c(0.6, 0), 
     ##                                 ^
-    ## index.Rmd:369:67: style: Trailing whitespace is superfluous.
+    ## index.Rmd:375:45: style: Trailing whitespace is superfluous.
+    ##               guide = F) + # suppress legend  
+    ##                                             ^~
+    ## index.Rmd:388:37: style: Trailing whitespace is superfluous.
+    ##     name = "Average\nincome in CHF", 
+    ##                                     ^
+    ## index.Rmd:390:67: style: Trailing whitespace is superfluous.
     ##     begin = 0.1, # this option seems to be new (compared to 2016): 
     ##                                                                   ^
-    ## index.Rmd:370:36: style: Trailing whitespace is superfluous.
+    ## index.Rmd:391:36: style: Trailing whitespace is superfluous.
     ##     # with this we can truncate the 
     ##                                    ^
-    ## index.Rmd:378:23: style: Only use double-quotes.
+    ## index.Rmd:399:23: style: Only use double-quotes.
     ##      title.position = 'top',
     ##                       ^~~~~
-    ## index.Rmd:388:9: style: Commented code should be removed.
-    ##   #     alpha = value
-    ##         ^~~~~~~~~~~~~
-    ## index.Rmd:415:17: style: Trailing whitespace is superfluous.
+    ## index.Rmd:416:17: style: Trailing whitespace is superfluous.
     ##   labs(x = NULL, 
     ##                 ^
-    ## index.Rmd:416:19: style: Trailing whitespace is superfluous.
+    ## index.Rmd:417:19: style: Trailing whitespace is superfluous.
     ##          y = NULL, 
     ##                   ^
-    ## index.Rmd:417:50: style: Trailing whitespace is superfluous.
+    ## index.Rmd:418:50: style: Trailing whitespace is superfluous.
     ##          title = "Switzerland's regional income", 
     ##                                                  ^
-    ## index.Rmd:418:68: style: Trailing whitespace is superfluous.
-    ##          subtitle = "Average income in Swiss municipalities, 2015", 
-    ##                                                                    ^
-    ## index.Rmd:442:27: style: Trailing whitespace is superfluous.
+    ## index.Rmd:419:75: style: Trailing whitespace is superfluous.
+    ##          subtitle = "Average yearly income in Swiss municipalities, 2015", 
+    ##                                                                           ^
+    ## index.Rmd:451:27: style: Trailing whitespace is superfluous.
     ## quantiles_gini <- data %>% 
     ##                           ^
-    ## index.Rmd:443:17: style: Trailing whitespace is superfluous.
+    ## index.Rmd:452:17: style: Trailing whitespace is superfluous.
     ##   pull(gini) %>% 
     ##                 ^
-    ## index.Rmd:450:27: style: Trailing whitespace is superfluous.
+    ## index.Rmd:456:27: style: Trailing whitespace is superfluous.
     ## quantiles_mean <- data %>% 
     ##                           ^
-    ## index.Rmd:451:17: style: Trailing whitespace is superfluous.
+    ## index.Rmd:457:17: style: Trailing whitespace is superfluous.
     ##   pull(mean) %>% 
     ##                 ^
-    ## index.Rmd:510:75: style: Trailing whitespace is superfluous.
+    ## index.Rmd:505:75: style: Trailing whitespace is superfluous.
     ##   # so each municipality knows its hex value based on the his gini and avg 
     ##                                                                           ^
-    ## index.Rmd:613:17: style: Trailing whitespace is superfluous.
+    ## index.Rmd:586:25: style: Trailing whitespace is superfluous.
+    ##   scale_alpha(name = "", 
+    ##                         ^
+    ## index.Rmd:587:33: style: Trailing whitespace is superfluous.
+    ##               range = c(0.6, 0), 
+    ##                                 ^
+    ## index.Rmd:588:45: style: Trailing whitespace is superfluous.
+    ##               guide = F) + # suppress legend  
+    ##                                             ^~
+    ## index.Rmd:616:17: style: Trailing whitespace is superfluous.
     ##   labs(x = NULL, 
     ##                 ^
-    ## index.Rmd:614:19: style: Trailing whitespace is superfluous.
+    ## index.Rmd:617:19: style: Trailing whitespace is superfluous.
     ##          y = NULL, 
     ##                   ^
-    ## index.Rmd:615:61: style: Trailing whitespace is superfluous.
-    ##          title = "Switzerland's regional income inequality", 
-    ##                                                             ^
-    ## index.Rmd:679:61: style: Trailing whitespace is superfluous.
+    ## index.Rmd:618:64: style: Trailing whitespace is superfluous.
+    ##          title = "Switzerland's regional income (in-)equality", 
+    ##                                                                ^
+    ## index.Rmd:686:61: style: Trailing whitespace is superfluous.
     ##   separate(group, into = c("gini", "mean"), sep = " - ") %>% 
     ##                                                             ^
