@@ -85,7 +85,7 @@ from <https://github.com/grssnbchr/bivariate-maps-ggplot2-sf>.
 
 ### Version information {#version-information}
 
-This report was generated on 2019-04-19 13:39:55. R version: 3.5.2 on
+This report was generated on 2019-04-19 15:17:34. R version: 3.5.2 on
 x86\_64-pc-linux-gnu. For this report, CRAN packages as of 2019-03-01
 were used.
 
@@ -341,7 +341,7 @@ theme_map <- function(...) {
     axis.text.y = element_blank(),
     axis.ticks = element_blank(),
     # add a subtle grid
-    panel.grid.major = element_line(color = "#ebebe5", size = 0.2),
+    panel.grid.major = element_line(color = "#dbdbd9", size = 0.2),
     panel.grid.minor = element_blank(),
     # background colors
     plot.background = element_rect(fill = default_background_color,

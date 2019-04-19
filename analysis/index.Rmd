@@ -286,7 +286,7 @@ theme_map <- function(...) {
     axis.text.y = element_blank(),
     axis.ticks = element_blank(),
     # add a subtle grid
-    panel.grid.major = element_line(color = "#ebebe5", size = 0.2),
+    panel.grid.major = element_line(color = "#dbdbd9", size = 0.2),
     panel.grid.minor = element_blank(),
     # background colors
     plot.background = element_rect(fill = default_background_color,
