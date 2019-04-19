@@ -5,7 +5,6 @@
 -   [Define a Map Theme](#define-a-map-theme)
 -   [Create a Univariate Choropleth](#create-a-univariate-choropleth)
 -   [Create a Bivariate Choropleth](#create-a-bivariate-choropleth)
--   [Linting](#linting)
 
 The above map shows income (in-)equality in Switzerland on the
 municipality level by visualizing two variables at the same time: [the
@@ -86,7 +85,7 @@ from <https://github.com/grssnbchr/bivariate-maps-ggplot2-sf>.
 
 ### Version information {#version-information}
 
-This report was generated on 2019-04-19 10:39:15. R version: 3.5.2 on
+This report was generated on 2019-04-19 11:03:35. R version: 3.5.2 on
 x86\_64-pc-linux-gnu. For this report, CRAN packages as of 2019-03-01
 were used.
 
@@ -334,7 +333,7 @@ posts](https://timogrossenbacher.ch/2018/03/categorical-spatial-interpolation-wi
 theme_map <- function(...) {
   theme_minimal() +
   theme(
-    text = element_text(family = "Ubuntu Regular", color = "#22211d"),
+    text = element_text(family = default_font_family, color = default_font_color),
     # remove all axes
     axis.line = element_blank(),
     axis.text.x = element_blank(),
@@ -344,26 +343,32 @@ theme_map <- function(...) {
     panel.grid.major = element_line(color = "#ebebe5", size = 0.2),
     panel.grid.minor = element_blank(),
     # background colors
-    plot.background = element_rect(fill = "#f5f5f2", color = NA), 
-    panel.background = element_rect(fill = "#f5f5f2", color = NA), 
-    legend.background = element_rect(fill = "#f5f5f2", color = NA),
+    plot.background = element_rect(fill = default_background_color, 
+                                   color = NA), 
+    panel.background = element_rect(fill = default_background_color, 
+                                    color = NA), 
+    legend.background = element_rect(fill = default_background_color, 
+                                     color = NA),
     # borders and margins
     plot.margin = unit(c(.5, .5, .2, .5), "cm"),
     panel.border = element_blank(),
     panel.spacing = unit(c(-.1, 0.2, .2, 0.2), "cm"),
     # titles
     legend.title = element_text(size = 11),
-    legend.text = element_text(size = 9, hjust = 0, color = "#4e4d47"),
-    plot.title = element_text(size = 16, hjust = 0.5, color = "#4e4d47"),
-    plot.subtitle = element_text(size = 12, hjust = 0.5, color = "#4e4d47", 
+    legend.text = element_text(size = 9, hjust = 0, 
+                               color = default_font_color),
+    plot.title = element_text(size = 16, hjust = 0.5, 
+                              color = default_font_color),
+    plot.subtitle = element_text(size = 12, hjust = 0.5, 
+                                 color = default_font_color, 
                                  margin = margin(b = -0.1, 
                                                  t = -0.1, 
                                                  l = 2, 
                                                  unit = "cm"), 
                                  debug = F),
     # captions
-    plot.caption = element_text(size = 9, 
-                                # hjust = .5, 
+    plot.caption = element_text(size = 7, 
+                                hjust = .5, 
                                 margin = margin(t = 0.2, 
                                                 b = 0, 
                                                 unit = "cm"), 
@@ -406,8 +411,8 @@ just using `sf` instead of `sp`.
 -   Use two more `geom_sf()` calls to add cantonal borders and lakes
     stemming from the `canton_geo` and `lake_geo` datasets,
     respectively.
--   Specify our previously defined map theme.
 -   Add titles and subtitles.
+-   Specify our previously defined map theme.
 
 ``` r
 # define number of classes
@@ -502,16 +507,9 @@ ggplot(
          y = NULL, 
          title = "Switzerland's regional income", 
          subtitle = "Average yearly income in Swiss municipalities, 2015", 
-         caption = paste0("Map CC-BY-SA\nAuthors: Timo Grossenbacher",
-                          " (@grssnbchr), Angelo Zehr (@angelozehr)",
-                          "\nGeometries: ThemaKart BFS and swisstopo;",
-                          " Data: ESTV, 2015")) +
+         caption = default_caption) +
   # add theme
-  theme_map() +
-  # center caption
-  theme(
-    plot.caption = element_text(hjust = .5)
-  )
+  theme_map()
 ```
 
 <img src="wp-content/uploads/2019/04/bm-thematic-univariate-map-1.png" width="100%" />
@@ -737,10 +735,7 @@ map <- ggplot(
          title = "Switzerland's regional income (in-)equality", 
          subtitle = paste0("Average yearly income and income",
                            " (in-)equality in Swiss municipalities, 2015"),
-         caption = paste0("Map CC-BY-SA\nAuthors: Timo Grossenbacher",
-                          " (@grssnbchr), Angelo Zehr (@angelozehr)",
-                          "\nGeometries: ThemaKart BFS and swisstopo;",
-                          " Data: ESTV, 2015")) +
+         caption = default_caption) +
   # add the theme
   theme_map()
 
@@ -788,9 +783,10 @@ annotations %>%
         # that's the whole point of doing this loop:
         nudge_x = current %>% pull(nudge_x),
         nudge_y = current %>% pull(nudge_y),
-        family = "Ubuntu Regular",
-        color = "#4e4d47",
-        size = 3
+        # other styles
+        family = default_font_family,
+        color = default_font_color,
+        size = 2
       )
   })
 ```
@@ -824,7 +820,7 @@ legend <- ggplot() +
   theme_map() +
   # make font small enough
   theme(
-    axis.title = element_text(size = 6),
+    axis.title = element_text(size = 6)
   ) +
   # quadratic tiles
   coord_fixed()
@@ -843,13 +839,18 @@ The numeric arguments to `draw_plot()` are basically trial and error.
 ``` r
 ggdraw() +
   draw_plot(map, 0, 0, 1, 1) +
-  draw_plot(legend, 0.05, 0.05, 0.2, 0.2)
+  draw_plot(legend, 0.05, 0.075, 0.2, 0.2)
 ```
 
 <img src="wp-content/uploads/2019/04/bm-thematic-bivariate-map-with-legend-1.png" width="100%" />
 
-Linting {#linting}
--------
+That's it! We hoped you liked this tutorial. If you have any questions
+or remarks, or know a better way of doing things, please let us know in
+the comment section.
+
+You can also give us a shout on Twitter:
+\[@grssnbchr\](<https://twitter.com/grssnbchr>) and
+\[@angelozehr\](<https://twitter.com/angelozehr>).
 
 The code in this RMarkdown is listed with the [lintr
 package](https://github.com/jimhester/lintr), which is based on the
@@ -859,135 +860,159 @@ package](https://github.com/jimhester/lintr), which is based on the
 lintr::lint("index.Rmd")
 ```
 
-    ## index.Rmd:79:16: style: Only use double-quotes.
+    ## index.Rmd:78:17: style: Use <-, not =, for assignment.
+    ## default_caption = paste0("Map CC-BY-SA; Code:",
+    ##                 ^
+    ## index.Rmd:90:16: style: Only use double-quotes.
     ##     fig.path = 'wp-content/uploads/2019/04/bm-',
     ##                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    ## index.Rmd:279:66: style: Trailing whitespace is superfluous.
-    ##     plot.background = element_rect(fill = "#f5f5f2", color = NA), 
-    ##                                                                  ^
-    ## index.Rmd:280:67: style: Trailing whitespace is superfluous.
-    ##     panel.background = element_rect(fill = "#f5f5f2", color = NA), 
-    ##                                                                   ^
-    ## index.Rmd:290:76: style: Trailing whitespace is superfluous.
-    ##     plot.subtitle = element_text(size = 12, hjust = 0.5, color = "#4e4d47", 
-    ##                                                                            ^
-    ## index.Rmd:291:59: style: Trailing whitespace is superfluous.
+    ## index.Rmd:281:1: style: lines should not be more than 80 characters.
+    ##     text = element_text(family = default_font_family, color = default_font_color),
+    ## ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    ## index.Rmd:291:68: style: Trailing whitespace is superfluous.
+    ##     plot.background = element_rect(fill = default_background_color, 
+    ##                                                                    ^
+    ## index.Rmd:292:48: style: Trailing whitespace is superfluous.
+    ##                                    color = NA), 
+    ##                                                ^
+    ## index.Rmd:293:69: style: Trailing whitespace is superfluous.
+    ##     panel.background = element_rect(fill = default_background_color, 
+    ##                                                                     ^
+    ## index.Rmd:294:49: style: Trailing whitespace is superfluous.
+    ##                                     color = NA), 
+    ##                                                 ^
+    ## index.Rmd:295:70: style: Trailing whitespace is superfluous.
+    ##     legend.background = element_rect(fill = default_background_color, 
+    ##                                                                      ^
+    ## index.Rmd:303:52: style: Trailing whitespace is superfluous.
+    ##     legend.text = element_text(size = 9, hjust = 0, 
+    ##                                                    ^
+    ## index.Rmd:305:54: style: Trailing whitespace is superfluous.
+    ##     plot.title = element_text(size = 16, hjust = 0.5, 
+    ##                                                      ^
+    ## index.Rmd:307:57: style: Trailing whitespace is superfluous.
+    ##     plot.subtitle = element_text(size = 12, hjust = 0.5, 
+    ##                                                         ^
+    ## index.Rmd:308:61: style: Trailing whitespace is superfluous.
+    ##                                  color = default_font_color, 
+    ##                                                             ^
+    ## index.Rmd:309:59: style: Trailing whitespace is superfluous.
     ##                                  margin = margin(b = -0.1, 
     ##                                                           ^
-    ## index.Rmd:292:59: style: Trailing whitespace is superfluous.
+    ## index.Rmd:310:59: style: Trailing whitespace is superfluous.
     ##                                                  t = -0.1, 
     ##                                                           ^
-    ## index.Rmd:293:56: style: Trailing whitespace is superfluous.
+    ## index.Rmd:311:56: style: Trailing whitespace is superfluous.
     ##                                                  l = 2, 
     ##                                                        ^
-    ## index.Rmd:294:63: style: Trailing whitespace is superfluous.
+    ## index.Rmd:312:63: style: Trailing whitespace is superfluous.
     ##                                                  unit = "cm"), 
     ##                                                               ^
-    ## index.Rmd:297:42: style: Trailing whitespace is superfluous.
-    ##     plot.caption = element_text(size = 9, 
+    ## index.Rmd:315:42: style: Trailing whitespace is superfluous.
+    ##     plot.caption = element_text(size = 7, 
     ##                                          ^
-    ## index.Rmd:298:46: style: Trailing whitespace is superfluous.
-    ##                                 # hjust = .5, 
-    ##                                              ^
-    ## index.Rmd:299:57: style: Trailing whitespace is superfluous.
+    ## index.Rmd:316:44: style: Trailing whitespace is superfluous.
+    ##                                 hjust = .5, 
+    ##                                            ^
+    ## index.Rmd:317:57: style: Trailing whitespace is superfluous.
     ##                                 margin = margin(t = 0.2, 
     ##                                                         ^
-    ## index.Rmd:300:55: style: Trailing whitespace is superfluous.
+    ## index.Rmd:318:55: style: Trailing whitespace is superfluous.
     ##                                                 b = 0, 
     ##                                                       ^
-    ## index.Rmd:301:62: style: Trailing whitespace is superfluous.
+    ## index.Rmd:319:62: style: Trailing whitespace is superfluous.
     ##                                                 unit = "cm"), 
     ##                                                              ^
-    ## index.Rmd:332:39: style: Trailing whitespace is superfluous.
+    ## index.Rmd:350:39: style: Trailing whitespace is superfluous.
     ## quantiles <- municipality_prod_geo %>% 
     ##                                       ^
-    ## index.Rmd:334:63: style: Trailing whitespace is superfluous.
+    ## index.Rmd:352:63: style: Trailing whitespace is superfluous.
     ##   quantile(probs = seq(0, 1, length.out = no_classes + 1)) %>% 
     ##                                                               ^
-    ## index.Rmd:339:49: style: Trailing whitespace is superfluous.
+    ## index.Rmd:357:49: style: Trailing whitespace is superfluous.
     ##   return(paste0(round(quantiles[idx] / 1000, 0), 
     ##                                                 ^
-    ## index.Rmd:341:36: style: Trailing whitespace is superfluous.
+    ## index.Rmd:359:36: style: Trailing whitespace is superfluous.
     ##                              " – ", 
     ##                                    ^
-    ## index.Rmd:352:27: style: Trailing whitespace is superfluous.
+    ## index.Rmd:370:27: style: Trailing whitespace is superfluous.
     ## municipality_prod_geo %<>% 
     ##                           ^
-    ## index.Rmd:353:36: style: Trailing whitespace is superfluous.
+    ## index.Rmd:371:36: style: Trailing whitespace is superfluous.
     ##   mutate(mean_quantiles = cut(mean, 
     ##                                    ^
-    ## index.Rmd:354:51: style: Trailing whitespace is superfluous.
+    ## index.Rmd:372:51: style: Trailing whitespace is superfluous.
     ##                                breaks = quantiles, 
     ##                                                   ^
-    ## index.Rmd:355:48: style: Trailing whitespace is superfluous.
+    ## index.Rmd:373:48: style: Trailing whitespace is superfluous.
     ##                                labels = labels, 
     ##                                                ^
-    ## index.Rmd:373:25: style: Trailing whitespace is superfluous.
+    ## index.Rmd:391:25: style: Trailing whitespace is superfluous.
     ##   scale_alpha(name = "", 
     ##                         ^
-    ## index.Rmd:374:33: style: Trailing whitespace is superfluous.
+    ## index.Rmd:392:33: style: Trailing whitespace is superfluous.
     ##               range = c(0.6, 0), 
     ##                                 ^
-    ## index.Rmd:375:45: style: Trailing whitespace is superfluous.
+    ## index.Rmd:393:45: style: Trailing whitespace is superfluous.
     ##               guide = F) + # suppress legend  
     ##                                             ^~
-    ## index.Rmd:388:37: style: Trailing whitespace is superfluous.
+    ## index.Rmd:406:37: style: Trailing whitespace is superfluous.
     ##     name = "Average\nincome in CHF", 
     ##                                     ^
-    ## index.Rmd:390:67: style: Trailing whitespace is superfluous.
+    ## index.Rmd:408:67: style: Trailing whitespace is superfluous.
     ##     begin = 0.1, # this option seems to be new (compared to 2016): 
     ##                                                                   ^
-    ## index.Rmd:391:36: style: Trailing whitespace is superfluous.
+    ## index.Rmd:409:36: style: Trailing whitespace is superfluous.
     ##     # with this we can truncate the 
     ##                                    ^
-    ## index.Rmd:399:23: style: Only use double-quotes.
+    ## index.Rmd:417:23: style: Only use double-quotes.
     ##      title.position = 'top',
     ##                       ^~~~~
-    ## index.Rmd:416:17: style: Trailing whitespace is superfluous.
+    ## index.Rmd:434:17: style: Trailing whitespace is superfluous.
     ##   labs(x = NULL, 
     ##                 ^
-    ## index.Rmd:417:19: style: Trailing whitespace is superfluous.
+    ## index.Rmd:435:19: style: Trailing whitespace is superfluous.
     ##          y = NULL, 
     ##                   ^
-    ## index.Rmd:418:50: style: Trailing whitespace is superfluous.
+    ## index.Rmd:436:50: style: Trailing whitespace is superfluous.
     ##          title = "Switzerland's regional income", 
     ##                                                  ^
-    ## index.Rmd:419:75: style: Trailing whitespace is superfluous.
+    ## index.Rmd:437:75: style: Trailing whitespace is superfluous.
     ##          subtitle = "Average yearly income in Swiss municipalities, 2015", 
     ##                                                                           ^
-    ## index.Rmd:451:27: style: Trailing whitespace is superfluous.
+    ## index.Rmd:462:27: style: Trailing whitespace is superfluous.
     ## quantiles_gini <- data %>% 
     ##                           ^
-    ## index.Rmd:452:17: style: Trailing whitespace is superfluous.
+    ## index.Rmd:463:17: style: Trailing whitespace is superfluous.
     ##   pull(gini) %>% 
     ##                 ^
-    ## index.Rmd:456:27: style: Trailing whitespace is superfluous.
+    ## index.Rmd:467:27: style: Trailing whitespace is superfluous.
     ## quantiles_mean <- data %>% 
     ##                           ^
-    ## index.Rmd:457:17: style: Trailing whitespace is superfluous.
+    ## index.Rmd:468:17: style: Trailing whitespace is superfluous.
     ##   pull(mean) %>% 
     ##                 ^
-    ## index.Rmd:505:75: style: Trailing whitespace is superfluous.
+    ## index.Rmd:516:75: style: Trailing whitespace is superfluous.
     ##   # so each municipality knows its hex value based on the his gini and avg 
     ##                                                                           ^
-    ## index.Rmd:586:25: style: Trailing whitespace is superfluous.
+    ## index.Rmd:597:25: style: Trailing whitespace is superfluous.
     ##   scale_alpha(name = "", 
     ##                         ^
-    ## index.Rmd:587:33: style: Trailing whitespace is superfluous.
+    ## index.Rmd:598:33: style: Trailing whitespace is superfluous.
     ##               range = c(0.6, 0), 
     ##                                 ^
-    ## index.Rmd:588:45: style: Trailing whitespace is superfluous.
+    ## index.Rmd:599:45: style: Trailing whitespace is superfluous.
     ##               guide = F) + # suppress legend  
     ##                                             ^~
-    ## index.Rmd:616:17: style: Trailing whitespace is superfluous.
+    ## index.Rmd:627:17: style: Trailing whitespace is superfluous.
     ##   labs(x = NULL, 
     ##                 ^
-    ## index.Rmd:617:19: style: Trailing whitespace is superfluous.
+    ## index.Rmd:628:19: style: Trailing whitespace is superfluous.
     ##          y = NULL, 
     ##                   ^
-    ## index.Rmd:618:64: style: Trailing whitespace is superfluous.
+    ## index.Rmd:629:64: style: Trailing whitespace is superfluous.
     ##          title = "Switzerland's regional income (in-)equality", 
     ##                                                                ^
-    ## index.Rmd:686:61: style: Trailing whitespace is superfluous.
+    ## index.Rmd:695:61: style: Trailing whitespace is superfluous.
     ##   separate(group, into = c("gini", "mean"), sep = " - ") %>% 
     ##                                                             ^

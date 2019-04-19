@@ -71,15 +71,26 @@ This report was generated on `r Sys.time()`. R version: `r paste0(version$major,
 What follows from here until the section **Data Sources** is just the usual routine: Detach all packages, remove all variables in the global environment, etc, and then load the packages from the MRAN server (a snapshot from March 1st, 2019). With this, we ensure [reproducibility and cross-device compatibility](https://timogrossenbacher.ch/2017/07/a-truly-reproducible-r-workflow/). We use Timo's [freely available template](https://github.com/grssnbchr/rddj-template) for this, with some adaptions detailed under **Reproducibility**.
 
 ```{r preparations, echo=FALSE, message=FALSE, warning=FALSE}
+# some constants
+default_font_color <- "#4e4d47"
+default_background_color <- "#f5f5f2"
+default_font_family <- "Ubuntu Regular"
+default_caption = paste0("Map CC-BY-SA; Code: ",
+                          "github.com/grssnbchr/bivariate-maps-ggplot2-sf",
+                          "\nAuthors: Timo Grossenbacher",
+                          " (@grssnbchr), Angelo Zehr (@angelozehr)",
+                          "\nGeometries: ThemaKart BFS and swisstopo;",
+                          " Data: ESTV, 2015")
+# define options for saving plots
 knitr::opts_chunk$set(
     out.width = "100%",
     dpi = 300,
     fig.width = 8,
     fig.height = 6,
-    fig.path = 'wp-content/uploads/2019/04/bm-',
+    fig.path = "wp-content/uploads/2019/04/bm-",
     strip.white = T,
     dev = "png",
-    dev.args = list(png = list(bg = "#f5f5f2"))
+    dev.args = list(png = list(bg = default_background_color))
 )
 
 
@@ -263,10 +274,12 @@ class(municipality_prod_geo)
 We first define a unique theme for the map, e.g. remove all axes, add a subtle grid (that you might not be able to see on a bright screen) etc. We mostly copied this from [another of Timo's blog posts](https://timogrossenbacher.ch/2018/03/categorical-spatial-interpolation-with-r/). 
 
 ```{r define map theme, echo=TRUE, message=FALSE, warning=FALSE}
+
 theme_map <- function(...) {
   theme_minimal() +
   theme(
-    text = element_text(family = "Ubuntu Regular", color = "#22211d"),
+    text = element_text(family = default_font_family, 
+                        color = default_font_color),
     # remove all axes
     axis.line = element_blank(),
     axis.text.x = element_blank(),
@@ -276,26 +289,32 @@ theme_map <- function(...) {
     panel.grid.major = element_line(color = "#ebebe5", size = 0.2),
     panel.grid.minor = element_blank(),
     # background colors
-    plot.background = element_rect(fill = "#f5f5f2", color = NA), 
-    panel.background = element_rect(fill = "#f5f5f2", color = NA), 
-    legend.background = element_rect(fill = "#f5f5f2", color = NA),
+    plot.background = element_rect(fill = default_background_color, 
+                                   color = NA), 
+    panel.background = element_rect(fill = default_background_color, 
+                                    color = NA), 
+    legend.background = element_rect(fill = default_background_color, 
+                                     color = NA),
     # borders and margins
     plot.margin = unit(c(.5, .5, .2, .5), "cm"),
     panel.border = element_blank(),
     panel.spacing = unit(c(-.1, 0.2, .2, 0.2), "cm"),
     # titles
     legend.title = element_text(size = 11),
-    legend.text = element_text(size = 9, hjust = 0, color = "#4e4d47"),
-    plot.title = element_text(size = 16, hjust = 0.5, color = "#4e4d47"),
-    plot.subtitle = element_text(size = 12, hjust = 0.5, color = "#4e4d47", 
+    legend.text = element_text(size = 9, hjust = 0, 
+                               color = default_font_color),
+    plot.title = element_text(size = 16, hjust = 0.5, 
+                              color = default_font_color),
+    plot.subtitle = element_text(size = 12, hjust = 0.5, 
+                                 color = default_font_color, 
                                  margin = margin(b = -0.1, 
                                                  t = -0.1, 
                                                  l = 2, 
                                                  unit = "cm"), 
                                  debug = F),
     # captions
-    plot.caption = element_text(size = 9, 
-                                # hjust = .5, 
+    plot.caption = element_text(size = 7, 
+                                hjust = .5, 
                                 margin = margin(t = 0.2, 
                                                 b = 0, 
                                                 unit = "cm"), 
@@ -321,8 +340,8 @@ Without going into much detail, this is basically the same process as in the 201
   * Use `geom_sf()` without an additional data argument to specify the main fill aesthetic (the visual variable showing the average income per municipality) and to visualize municipal borders.
   * Add the Viridis color scale for that fill aesthetic.
   * Use two more `geom_sf()` calls to add cantonal borders and lakes stemming from the `canton_geo` and `lake_geo` datasets, respectively.
-  * Specify our previously defined map theme.
   * Add titles and subtitles.
+  * Specify our previously defined map theme.
 
 ```{r thematic-univariate-map, echo=TRUE, message=FALSE, warning=FALSE}
 # define number of classes
@@ -417,16 +436,9 @@ ggplot(
          y = NULL, 
          title = "Switzerland's regional income", 
          subtitle = "Average yearly income in Swiss municipalities, 2015", 
-         caption = paste0("Map CC-BY-SA\nAuthors: Timo Grossenbacher",
-                          " (@grssnbchr), Angelo Zehr (@angelozehr)",
-                          "\nGeometries: ThemaKart BFS and swisstopo;",
-                          " Data: ESTV, 2015")) +
+         caption = default_caption) +
   # add theme
-  theme_map() +
-  # center caption
-  theme(
-    plot.caption = element_text(hjust = .5)
-  )
+  theme_map()
 ```
 
 ## Create a Bivariate Choropleth
@@ -618,10 +630,7 @@ map <- ggplot(
          title = "Switzerland's regional income (in-)equality", 
          subtitle = paste0("Average yearly income and income",
                            " (in-)equality in Swiss municipalities, 2015"),
-         caption = paste0("Map CC-BY-SA\nAuthors: Timo Grossenbacher",
-                          " (@grssnbchr), Angelo Zehr (@angelozehr)",
-                          "\nGeometries: ThemaKart BFS and swisstopo;",
-                          " Data: ESTV, 2015")) +
+         caption = default_caption) +
   # add the theme
   theme_map()
 
@@ -669,9 +678,10 @@ annotations %>%
         # that's the whole point of doing this loop:
         nudge_x = current %>% pull(nudge_x),
         nudge_y = current %>% pull(nudge_y),
-        family = "Ubuntu Regular",
-        color = "#4e4d47",
-        size = 3
+        # other styles
+        family = default_font_family,
+        color = default_font_color,
+        size = 2
       )
   })
 ```
@@ -701,7 +711,7 @@ legend <- ggplot() +
   theme_map() +
   # make font small enough
   theme(
-    axis.title = element_text(size = 4),
+    axis.title = element_text(size = 6)
   ) +
   # quadratic tiles
   coord_fixed()
@@ -716,10 +726,12 @@ The numeric arguments to `draw_plot()` are basically trial and error.
 ```{r thematic-bivariate-map-with-legend}
 ggdraw() +
   draw_plot(map, 0, 0, 1, 1) +
-  draw_plot(legend, 0.15, 0.05, 0.2, 0.2)
+  draw_plot(legend, 0.05, 0.075, 0.2, 0.2)
 ```
 
-## Linting
+That's it! We hoped you liked this tutorial. If you have any questions or remarks, or know a better way of doing things, please let us know in the comment section.
+
+You can also give us a shout on Twitter: [@grssnbchr](https://twitter.com/grssnbchr) and [@angelozehr](https://twitter.com/angelozehr).
 
 The code in this RMarkdown is listed with the [lintr package](https://github.com/jimhester/lintr), which is based on the  [tidyverse style guide](http://style.tidyverse.org/). 
 
