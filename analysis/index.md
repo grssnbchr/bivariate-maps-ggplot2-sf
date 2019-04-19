@@ -85,7 +85,7 @@ from <https://github.com/grssnbchr/bivariate-maps-ggplot2-sf>.
 
 ### Version information {#version-information}
 
-This report was generated on 2019-04-19 11:31:14. R version: 3.5.2 on
+This report was generated on 2019-04-19 13:39:55. R version: 3.5.2 on
 x86\_64-pc-linux-gnu. For this report, CRAN packages as of 2019-03-01
 were used.
 
@@ -358,9 +358,9 @@ theme_map <- function(...) {
     legend.title = element_text(size = 11),
     legend.text = element_text(size = 9, hjust = 0,
                                color = default_font_color),
-    plot.title = element_text(size = 16, hjust = 0.5,
+    plot.title = element_text(size = 15, hjust = 0.5,
                               color = default_font_color),
-    plot.subtitle = element_text(size = 12, hjust = 0.5,
+    plot.subtitle = element_text(size = 10, hjust = 0.5,
                                  color = default_font_color,
                                  margin = margin(b = -0.1,
                                                  t = -0.1,
