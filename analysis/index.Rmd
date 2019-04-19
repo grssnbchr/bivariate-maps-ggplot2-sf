@@ -681,7 +681,7 @@ annotations %>%
         # other styles
         family = default_font_family,
         color = default_font_color,
-        size = 2
+        size = 3
       )
   })
 ```
@@ -693,7 +693,7 @@ For the legend we use the `geom_tile()` geometry of `ggplot2`. Before that, we h
 ```{r specify the bivariate legend, echo=TRUE, message=FALSE, warning=FALSE}
 # separate the groups
 bivariate_color_scale %<>%
-  separate(group, into = c("gini", "mean"), sep = " - ") %>% 
+  separate(group, into = c("gini", "mean"), sep = " - ") %>%
   mutate(gini = as.integer(gini),
          mean = as.integer(mean))
 
@@ -733,7 +733,7 @@ That's it! We hoped you liked this tutorial. If you have any questions or remark
 
 You can also give us a shout on Twitter: [@grssnbchr](https://twitter.com/grssnbchr) and [@angelozehr](https://twitter.com/angelozehr).
 
-The code in this RMarkdown is listed with the [lintr package](https://github.com/jimhester/lintr), which is based on the  [tidyverse style guide](http://style.tidyverse.org/). 
+The code in this RMarkdown is linted with the [lintr package](https://github.com/jimhester/lintr), which is based on the  [tidyverse style guide](http://style.tidyverse.org/). 
 
 ```{r echo=TRUE, message=FALSE, warning=FALSE}
 lintr::lint("index.Rmd")
