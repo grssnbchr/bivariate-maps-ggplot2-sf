@@ -85,7 +85,7 @@ from <https://github.com/grssnbchr/bivariate-maps-ggplot2-sf>.
 
 ### Version information {#version-information}
 
-This report was generated on 2019-04-19 17:12:22. R version: 3.5.2 on
+This report was generated on 2019-04-19 17:16:57. R version: 3.5.2 on
 x86\_64-pc-linux-gnu. For this report, CRAN packages as of 2019-03-01
 were used.
 
@@ -513,7 +513,7 @@ ggplot(
   theme_map()
 ```
 
-<img src="https://timogrossenbacher.ch/2019/04/bivariate-maps-with-ggplot2-and-sf/wp-content/uploads/2019/04/bm-thematic-univariate-map-1.png" width="100%" />
+<img src="https://timogrossenbacher.ch/wp-content/uploads/2019/04/bm-thematic-univariate-map-1.png" width="100%" />
 
 Create a Bivariate Choropleth {#create-a-bivariate-choropleth}
 -----------------------------
@@ -843,7 +843,7 @@ ggdraw() +
   draw_plot(legend, 0.05, 0.075, 0.2, 0.2)
 ```
 
-<img src="https://timogrossenbacher.ch/2019/04/bivariate-maps-with-ggplot2-and-sf/wp-content/uploads/2019/04/bm-thematic-bivariate-map-with-legend-1.png" width="100%" />
+<img src="https://timogrossenbacher.ch/wp-content/uploads/2019/04/bm-thematic-bivariate-map-with-legend-1.png" width="100%" />
 
 That's it! We hoped you liked this tutorial. If you have any questions
 or remarks, or know a better way of doing things, please let us know in
@@ -860,7 +860,3 @@ package](https://github.com/jimhester/lintr), which is based on the
 ``` r
 lintr::lint("index.Rmd")
 ```
-
-    ## index.Rmd:90:1: style: lines should not be more than 80 characters.
-    ##     fig.path = "https://timogrossenbacher.ch/2019/04/bivariate-maps-with-ggplot2-and-sf/wp-content/uploads/2019/04/bm-",
-    ## ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
