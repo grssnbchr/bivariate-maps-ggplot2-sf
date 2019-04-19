@@ -87,7 +87,7 @@ knitr::opts_chunk$set(
     dpi = 300,
     fig.width = 8,
     fig.height = 6,
-    fig.path = "wp-content/uploads/2019/04/bm-",
+    fig.path = "https://timogrossenbacher.ch/2019/04/bivariate-maps-with-ggplot2-and-sf/wp-content/uploads/2019/04/bm-",
     strip.white = T,
     dev = "png",
     dev.args = list(png = list(bg = default_background_color))
