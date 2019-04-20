@@ -85,7 +85,7 @@ from <https://github.com/grssnbchr/bivariate-maps-ggplot2-sf>.
 
 ### Version information {#version-information}
 
-This report was generated on 2019-04-19 17:16:57. R version: 3.5.2 on
+This report was generated on 2019-04-20 09:31:18. R version: 3.5.2 on
 x86\_64-pc-linux-gnu. For this report, CRAN packages as of 2019-03-01
 were used.
 
@@ -546,7 +546,7 @@ Automation never hurts.
 This GIF from Joshua's blog nicely shows the process of blending the two
 scales:
 
-<img src="http://www.joshuastevens.net/images/js_bivariateMix.gif" width="100%" />
+<img src="https://www.joshuastevens.net/images/js_bivariateMix.gif" width="6%" />
 
 To match the 9 different colors with appropriate classes, we calculate
 1/3-quantiles for both variables.

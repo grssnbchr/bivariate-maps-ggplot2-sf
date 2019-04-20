@@ -453,7 +453,7 @@ Using the "Sketch" software we combined two scales with fill "blue" (base color 
 
 This GIF from Joshua's blog nicely shows the process of blending the two scales:
 
-<img src="http://www.joshuastevens.net/images/js_bivariateMix.gif" width="100%" />
+<img src="https://www.joshuastevens.net/images/js_bivariateMix.gif" width="6%" />
 
 To match the 9 different colors with appropriate classes, we calculate 1/3-quantiles for both variables.
 
