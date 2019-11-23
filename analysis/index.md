@@ -12,7 +12,7 @@ Gini coefficient](https://en.wikipedia.org/wiki/Gini_coefficient) and
 average income (in Swiss Francs). It uses a so-called *bivariate color
 scale*, blending two different color scales into one. Lastly, it uses
 the beautiful relief depicting the mountainous Swiss landscape. Here
-we're going to show you how to produce such a map *exclusively with R*.
+we’re going to show you how to produce such a map *exclusively with R*.
 
 For this blog post, I worked together with my colleague [Angelo
 Zehr](https://twitter.com/angelozehr) who recently published a [nice
@@ -58,7 +58,7 @@ This tutorial is structured as follows:
 -   Oh, and lakes and cantonal borders (cantons = Swiss provinces) are
     now added as well.
 
-Let's go!
+Let’s go!
 
 Reproducibility {#reproducibility}
 ---------------
@@ -85,7 +85,7 @@ from <https://github.com/grssnbchr/bivariate-maps-ggplot2-sf>.
 
 ### Version information {#version-information}
 
-This report was generated on 2019-04-20 09:36:37. R version: 3.5.2 on
+This report was generated on 2019-11-23 13:01:05. R version: 3.5.3 on
 x86\_64-pc-linux-gnu. For this report, CRAN packages as of 2019-03-01
 were used.
 
@@ -100,7 +100,7 @@ environment, etc, and then load the packages from the MRAN server (a
 snapshot from March 1st, 2019). With this, we ensure [reproducibility
 and cross-device
 compatibility](https://timogrossenbacher.ch/2017/07/a-truly-reproducible-r-workflow/).
-We use Timo's [freely available
+We use Timo’s [freely available
 template](https://github.com/grssnbchr/rddj-template) for this, with
 some adaptions detailed under **Reproducibility**.
 
@@ -110,7 +110,7 @@ some adaptions detailed under **Reproducibility**.
 
 For this project, we use the usual suspects, i.e. `tidyverse` packages
 including `ggplot2` for plotting, `sf` for geodata processing and
-`raster` for working with (spatial) raster data, i.e. the relief. Also,
+`raster` for working with (spatial) raster data, i.e. the relief. Also,
 the `viridis` package imports the beautiful Viridis color scale we use
 for the univariate map. Lastly, `cowplot` is used to combine the
 bivariate map and its custom legend.
@@ -133,7 +133,7 @@ file = "manifest.R")
 
 ### Install packages {#install-packages}
 
-If you're interested in what the following does, we recommend going
+If you’re interested in what the following does, we recommend going
 through the explanations for
 [rddj-template](https://github.com/grssnbchr/rddj-template#more-about-checkpoint).
 
@@ -178,13 +178,13 @@ unlink("manifest.R")
 sessionInfo()
 ```
 
-    ## R version 3.5.2 (2018-12-20)
+    ## R version 3.5.3 (2019-03-11)
     ## Platform: x86_64-pc-linux-gnu (64-bit)
-    ## Running under: Ubuntu 18.04.1 LTS
+    ## Running under: Ubuntu 18.04.3 LTS
     ## 
     ## Matrix products: default
-    ## BLAS: /usr/lib/x86_64-linux-gnu/openblas/libblas.so.3
-    ## LAPACK: /usr/lib/x86_64-linux-gnu/libopenblasp-r0.2.20.so
+    ## BLAS: /opt/R/R-3.5.3/lib/R/lib/libRblas.so
+    ## LAPACK: /opt/R/R-3.5.3/lib/R/lib/libRlapack.so
     ## 
     ## locale:
     ##  [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
@@ -215,11 +215,11 @@ sessionInfo()
     ## [21] rvest_0.3.2      codetools_0.2-16 evaluate_0.13    rex_1.1.2       
     ## [25] class_7.3-15     broom_0.5.1      Rcpp_1.0.0       scales_1.0.0    
     ## [29] backports_1.1.3  classInt_0.3-1   jsonlite_1.6     gridExtra_2.3   
-    ## [33] hms_0.4.2        digest_0.6.18    stringi_1.3.1    grid_3.5.2      
-    ## [37] cli_1.0.1        tools_3.5.2      lazyeval_0.2.1   crayon_1.3.4    
+    ## [33] hms_0.4.2        digest_0.6.18    stringi_1.3.1    grid_3.5.3      
+    ## [37] cli_1.0.1        tools_3.5.3      lazyeval_0.2.1   crayon_1.3.4    
     ## [41] pkgconfig_2.0.2  xml2_1.2.0       lubridate_1.7.4  assertthat_0.2.0
     ## [45] httr_1.4.0       R6_2.4.0         units_0.6-2      nlme_3.1-137    
-    ## [49] compiler_3.5.2
+    ## [49] compiler_3.5.3
 
 Data Sources {#data-sources}
 ------------
@@ -238,7 +238,7 @@ The data provider in this case is the Swiss Federal Tax Administration
 (FTA), where the original data (as an Excel) can be [downloaded from
 here](https://www.estv.admin.ch/dam/estv/de/dokumente/allgemein/Dokumentation/Zahlen_fakten/Steuerstatistiken/direkte_bundessteuer/np_statistische_kennzahlen_ohne/NP_2015_mitnull.xlsx.download.xlsx/NP_2015_mitnull.xlsx).
 The columns used were `mean_reinka` and `gini_reinka` for `mean` and
-`gini` (in the "Gemeinden - Communes" tab), respectively. See the first
+`gini` (in the “Gemeinden - Communes” tab), respectively. See the first
 tabs in the Excel for a short explanation. Find additional explanations
 on [the FTA website
 (German)](https://www.estv.admin.ch/estv/de/home/allgemein/steuerstatistiken/fachinformationen/steuerstatistiken/direkte-bundessteuer.html),
@@ -259,21 +259,24 @@ Swiss Federal Office of Topography (swisstopo) depicting Swiss borders
 as of 2015 are used herein.
 
 -   `input/gde-1-1-15.*`: These geometries do not show the political
-    borders of Swiss municipalities, but the so-called "productive"
-    area, i.e., larger lakes and other "unproductive" areas such as
+    borders of Swiss municipalities, but the so-called “productive”
+    area, i.e., larger lakes and other “unproductive” areas such as
     mountains are excluded. This has two advantages: 1) The relatively
-    sparsely populated but very large municipalities in the Alps don't
+    sparsely populated but very large municipalities in the Alps don’t
     have too much visual weight and 2) it allows us to use the beautiful
-    raster relief of the Alps as a background. These data are also from
-    the FSO, but not freely available. I was allowed to republish the
-    Shapefile for this educational purpose (also included in the `input`
-    folder). Please stick to that policy.
+    raster relief of the Alps as a background. These data are now freely
+    available [from the
+    FSO](https://www.bfs.admin.ch/bfs/en/home/statistics/regional-statistics/base-maps/cartographic-bases.assetdetail.7546178.html).
+    Click on “Download map (ZIP)”, the polygon files are in
+    `/PRO/01_INST/Vegetationsfläche_vf/K4_polgYYYYMMDD_vf`; different
+    timestamps are available, the 2015 data used here stem from another
+    data set.
 -   `input/g2*`: National (`s`) as well as cantonal borders (`k`) and
     lakes (`l`). Available
     [here](https://www.bfs.admin.ch/bfs/de/home/dienstleistungen/geostat/geodaten-bundesstatistik/administrative-grenzen/generalisierte-gemeindegrenzen.html).
 -   (Hillshaded) relief: This is a freely available GeoTIFF from
     [swisstopo](https://shop.swisstopo.admin.ch/en/products/maps/national/digital/srm1000).
-    For the sake of simplicity, it was converted to the "ESRI ASCII"
+    For the sake of simplicity, it was converted to the “ESRI ASCII”
     format using
     `gdal_translate -of AAIGrid 02-relief-georef.tif 02-relief-ascii.asc`
     on the CLI. The `raster` can read that format natively, without the
@@ -299,7 +302,7 @@ relief <- raster("input/02-relief-ascii.asc") %>%
   mask(country_geo) %>%
   as("SpatialPixelsDataFrame") %>%
   as.data.frame() %>%
-  rename(value = layer)
+  rename(value = `X02.relief.ascii`)
 
 # clean up
 rm(country_geo)
@@ -308,7 +311,7 @@ rm(country_geo)
 ### Join Geodata with Thematic Data {#join-geodata-with-thematic-data}
 
 In the following chunk, the municipality geodata is extended (joined)
-with the thematic data over each municipality's unique identifier, so we
+with the thematic data over each municipality’s unique identifier, so we
 end up with a data frame consisting of the thematic data as well as the
 geometries. Note that the class of this resulting object is still `sf`
 as well as `data.frame`.
@@ -324,9 +327,9 @@ class(municipality_prod_geo)
 Define a Map Theme {#define-a-map-theme}
 ------------------
 
-We first define a unique theme for the map, e.g. remove all axes, add a
+We first define a unique theme for the map, e.g. remove all axes, add a
 subtle grid (that you might not be able to see on a bright screen) etc.
-We mostly copied this from [another of Timo's blog
+We mostly copied this from [another of Timo’s blog
 posts](https://timogrossenbacher.ch/2018/03/categorical-spatial-interpolation-with-r/).
 
 ``` r
@@ -382,8 +385,8 @@ theme_map <- function(...) {
 Create a Univariate Choropleth {#create-a-univariate-choropleth}
 ------------------------------
 
-First, let's create a standard (univariate) choropleth map based on the
-average income alone, i.e. the `mean` variable.
+First, let’s create a standard (univariate) choropleth map based on the
+average income alone, i.e. the `mean` variable.
 
 Without going into much detail, this is basically the same process as in
 the 2016 blog post, detailed in the [respective
@@ -401,7 +404,7 @@ just using `sf` instead of `sp`.
 
 -   Specify the main data source.
 -   Add the relief through a call to `geom_raster()`.
--   Add a truncated alpha scale for the relief, as the "fill" aesthetic
+-   Add a truncated alpha scale for the relief, as the “fill” aesthetic
     is already taken (refer to [this
     section](https://timogrossenbacher.ch/2016/12/beautiful-thematic-maps-with-ggplot2-only/#relief)
     for an explanation).
@@ -535,15 +538,15 @@ accessibility of such maps and *thus we refrain from discussing these
 points here*. Our blog post is intended to remain purely technical, also
 for the sake of conciceness and reading time.
 
-Using the "Sketch" software we combined two scales with fill "blue"
-(base color \#1E8CE3) and "red" (base color \#C91024), each with three
-different opacities (20%, 50%, 80%), and blend mode "multiply", which
+Using the “Sketch” software we combined two scales with fill “blue”
+(base color \#1E8CE3) and “red” (base color \#C91024), each with three
+different opacities (20%, 50%, 80%), and blend mode “multiply”, which
 resulted in the 3 \* 3 = 9 hex values specified manually below. Side
-note: If somebody comes up with a handy way of "blending" hex values in
+note: If somebody comes up with a handy way of “blending” hex values in
 R, or even knows a package for that, please notify us in the comments.
 Automation never hurts.
 
-This GIF from Joshua's blog nicely shows the process of blending the two
+This GIF from Joshua’s blog nicely shows the process of blending the two
 scales:
 
 <img src="https://www.joshuastevens.net/images/js_bivariateMix.gif" width="60%" />
@@ -619,7 +622,7 @@ case, except for the custom legend and annotations.
 Adding the annotations is a bit cumbersome because the `curvature` and
 `nudge_*` arguments cannot be specified as data-driven aesthetics for
 `geom_curve()` and `geom_text()`, respectively. However, we need them to
-be data-driven, as we don't want to specify the same curvature for all
+be data-driven, as we don’t want to specify the same curvature for all
 arrows, for example. For this reason we need to save all annotations
 into a separate data frame. We then call `geom_curve()` and
 `geom_text()` separately for each annotation to specify dynamic
@@ -833,7 +836,7 @@ Here we just combine the legend with the map using the `cowplot`
 package. It allows us to specify the exact position of plots on the
 canvas, and scaling the width and height of plots (as we do with the
 legend). It would have been nice to rotate the legend by 45° but we
-didn't find a way how to do this.
+didn’t find a way how to do this.
 
 The numeric arguments to `draw_plot()` are basically trial and error.
 
@@ -845,11 +848,11 @@ ggdraw() +
 
 <img src="https://timogrossenbacher.ch/wp-content/uploads/2019/04/bm-thematic-bivariate-map-with-legend-1.png" width="100%" />
 
-That's it! We hoped you liked this tutorial. If you have any questions
+That’s it! We hoped you liked this tutorial. If you have any questions
 or remarks, or know a better way of doing things, please let us know in
 the comment section.
 
-You can also give us a shout on Twitter: We're
+You can also give us a shout on Twitter: We’re
 [grssnbchr](https://twitter.com/grssnbchr) and
 [angelozehr](https://twitter.com/angelozehr).
 
@@ -860,3 +863,7 @@ package](https://github.com/jimhester/lintr), which is based on the
 ``` r
 lintr::lint("index.Rmd")
 ```
+
+    ## index.Rmd:255:18: style: Words within variable and function names should be separated by '_' rather than '.'.
+    ##   rename(value = `X02.relief.ascii`)
+    ##                  ^~~~~~~~~~~~~~~~~~

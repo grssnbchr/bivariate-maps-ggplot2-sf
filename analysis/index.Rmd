@@ -40,7 +40,7 @@ user_name <- "grssnbchr" # your Git username (only needed if
 project_name <- "bivariate-maps-ggplot2-sf" # adapt!
 package_date <- "2019-03-01" # date of the CRAN snapshot that
 # the checkpoint package uses
-R_version <- "3.5.2" # R-Version to use
+R_version <- "3.5.3" # R-Version to use
 options(Ncpus = 4) # use 4 cores for parallelized installation of packages
 if (R_version != paste0(version$major, ".", version$minor)){
   stop("ERROR: specified R version does not match currently used.")
@@ -228,7 +228,7 @@ data <- read_csv("input/data.csv")
 
 Various geodata from the Swiss Federal Statistical Office (FSO) and the Swiss Federal Office of Topography (swisstopo) depicting Swiss borders as of 2015 are used herein.
 
-* `input/gde-1-1-15.*`: These geometries do not show the political borders of Swiss municipalities, but the so-called "productive" area, i.e., larger lakes and other "unproductive" areas such as mountains are excluded. This has two advantages: 1) The relatively sparsely populated but very large municipalities in the Alps don't have too much visual weight and 2) it allows us to use the beautiful raster relief of the Alps as a background. These data are also from the FSO, but not freely available. I was allowed to republish the Shapefile for this educational purpose (also included in the `input` folder). Please stick to that policy.
+* `input/gde-1-1-15.*`: These geometries do not show the political borders of Swiss municipalities, but the so-called "productive" area, i.e., larger lakes and other "unproductive" areas such as mountains are excluded. This has two advantages: 1) The relatively sparsely populated but very large municipalities in the Alps don't have too much visual weight and 2) it allows us to use the beautiful raster relief of the Alps as a background. These data are now freely available [from the FSO](https://www.bfs.admin.ch/bfs/en/home/statistics/regional-statistics/base-maps/cartographic-bases.assetdetail.7546178.html). Click on "Download map (ZIP)", the polygon files are in `/PRO/01_INST/Vegetationsfläche_vf/K4_polgYYYYMMDD_vf`; different timestamps are available, the 2015 data used here stem from another data set.
 * `input/g2*`: National (`s`) as well as cantonal borders (`k`) and lakes (`l`). Available [here](https://www.bfs.admin.ch/bfs/de/home/dienstleistungen/geostat/geodaten-bundesstatistik/administrative-grenzen/generalisierte-gemeindegrenzen.html).
 * (Hillshaded) relief: This is a freely available GeoTIFF from [swisstopo](https://shop.swisstopo.admin.ch/en/products/maps/national/digital/srm1000). For the sake of simplicity, it was converted to the "ESRI ASCII" format using ` gdal_translate -of AAIGrid 02-relief-georef.tif 02-relief-ascii.asc` on the CLI. The `raster` can read that format natively, without the need of explicitly installing the `rgdal` package – which is not the case for GeoTIFF files.
 
@@ -252,7 +252,7 @@ relief <- raster("input/02-relief-ascii.asc") %>%
   mask(country_geo) %>%
   as("SpatialPixelsDataFrame") %>%
   as.data.frame() %>%
-  rename(value = layer)
+  rename(value = `X02.relief.ascii`)
 
 # clean up
 rm(country_geo)
